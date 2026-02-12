@@ -1,0 +1,20 @@
+const express=require('express');
+const {createproblem,updateproblem,getproblemById,getallproblem,deleteproblem,solvedAllproblemByUser,SubmittedProblem}=require('../Controller/leetcodeproblem');
+const adminmiddleware = require('../middleware/adminmiddleware');
+const usermiddleware=require("../middleware/usermiddleware");
+const problemrouter=express.Router();
+// create
+// fetch
+// update
+// delete
+// admin authentication required
+problemrouter.post("/createproblem",adminmiddleware,createproblem);
+problemrouter.delete("/removeproblem/:id",adminmiddleware,deleteproblem);
+problemrouter.put("/updateproblem/:id",adminmiddleware,updateproblem);
+
+problemrouter.get("/showproblem/:id", usermiddleware ,getproblemById);
+problemrouter.get("/showproblem",usermiddleware,getallproblem);
+problemrouter.get("/problemsolved/user",usermiddleware,solvedAllproblemByUser)    //konsi problem solve kari hai user ne
+problemrouter.get("/submittedproblem/:pid",usermiddleware,SubmittedProblem);
+
+module.exports=problemrouter;
