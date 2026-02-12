@@ -168,7 +168,7 @@ const solvedAllproblemByUser = async (req, res) => {
 const SubmittedProblem=async(req,res)=>{
    try {
        const problemid=req.params.pid;
-       const userid=req.result._id;
+       const userid=req.user._id;
        const ans=await Submission.find({userid,problemid});
        if(ans.lenght==0)
         return res.status(200).send("Submit Your First Problem");
