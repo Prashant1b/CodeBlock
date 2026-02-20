@@ -159,7 +159,7 @@ const solvedAllproblemByUser = async (req, res) => {
     res.status(200).send(person.problemsolved);
   }
   catch (error) {
-    res.status.send("Error " + error.message);
+    res.status(500).send("Error " + error.message);
   }
 
 

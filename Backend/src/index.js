@@ -1,43 +1,52 @@
-const express = require('express');
-const app = express();
-const dotenv = require('dotenv')
-dotenv.config();
-const main = require('./config/db');
-const cookieparser=require('cookie-parser')
-const router=require("./route/userAuth");
-const redisClient = require('./config/redis');
-const problemrouter = require('./route/problemsetter');
- const submitrouter=require('./route/Submit');
-app.use(express.json());
-app.use(cookieparser());
+  const express = require('express');
+  const app = express();
+  const dotenv = require('dotenv')
+  dotenv.config();
+  const main = require('./config/db');
+  const cookieparser=require('cookie-parser')
+  const router=require("./route/userAuth");
+  const redisClient = require('./config/redis');
+  const problemrouter = require('./route/problemsetter');
+  const cors = require("cors");
+  const submitrouter=require('./route/Submit');
 
-app.use("/user",router);
-app.use("/leetcode",problemrouter);
-app.use("/problem",submitrouter);
+  app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    credentials: true,
+  })
+);
 
-const Initaliseconnection=async()=>{
-     try{
-        await Promise.all([main(),redisClient.connect()]);
-        console.log("DB connected")
-                 app.listen(process.env.PORT, () => {
-                console.log("Server is listen on the port: " + process.env.PORT)
-           })
-     }
-     catch(err){
-        console.log(err.message)
-     }
-}
+  app.use(express.json());
+  app.use(cookieparser());
 
-Initaliseconnection();
+  app.use("/user",router);
+  app.use("/leetcode",problemrouter);
+  app.use("/problem",submitrouter);
 
-// main()
-//     .then(async () => {
-//        console.log("connected to mongodb")
-//         app.listen(process.env.PORT, () => {
-//             console.log("Server is listen on the port: " + process.env.PORT)
-//         })
-//     })
-// .catch(err=>console.log(err.message))
+  const Initaliseconnection=async()=>{
+      try{
+          await Promise.all([main(),redisClient.connect()]);
+          console.log("DB connected")
+                  app.listen(process.env.PORT, () => {
+                  console.log("Server is listen on the port: " + process.env.PORT)
+            })
+      }
+      catch(err){
+          console.log(err.message)
+      }
+  }
+
+  Initaliseconnection();
+
+  // main()
+  //     .then(async () => {
+  //        console.log("connected to mongodb")
+  //         app.listen(process.env.PORT, () => {
+  //             console.log("Server is listen on the port: " + process.env.PORT)
+  //         })
+  //     })
+  // .catch(err=>console.log(err.message))
 
 
 

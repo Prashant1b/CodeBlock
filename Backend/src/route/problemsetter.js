@@ -13,7 +13,7 @@ problemrouter.delete("/removeproblem/:id",adminmiddleware,deleteproblem);
 problemrouter.put("/updateproblem/:id",adminmiddleware,updateproblem);
 
 problemrouter.get("/showproblem/:id", usermiddleware ,getproblemById);
-problemrouter.get("/showproblem",usermiddleware,getallproblem);
+problemrouter.get("/showproblem",getallproblem);
 problemrouter.get("/problemsolved/user",usermiddleware,solvedAllproblemByUser)    //konsi problem solve kari hai user ne
 problemrouter.get("/submittedproblem/:pid",usermiddleware,SubmittedProblem);
 

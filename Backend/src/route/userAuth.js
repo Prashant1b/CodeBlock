@@ -3,7 +3,6 @@ const { register,adminRegister, login, logout, getprofile,DeleteUserData, update
 const adminmiddleware = require('../middleware/adminmiddleware');
 const router=express.Router();
 const usermiddleware=require("../middleware/usermiddleware");
-
 // register
 router.post("/register",register);
 // admin Register
