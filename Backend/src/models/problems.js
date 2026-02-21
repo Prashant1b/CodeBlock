@@ -18,6 +18,7 @@ const problemschema=new mongoose.Schema({
     tags:{
         type:String,
          required:true,
+         default:[]
     },
     visibletestcases:[{
         input:{

@@ -17,6 +17,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./Pages/admin/AdminDashboard";
 import ProblemsList from "./Pages/admin/ProblemList";
 import ProblemForm from "./Pages/admin/ProblemForm";
+import AdminUsers from "./Pages/admin/AdminUser";
 
 function App() {
   const { user, logout } = useAuth(); // ✅ ADD THIS
@@ -49,6 +50,7 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="problems" element={<ProblemsList />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="problems/new" element={<ProblemForm />} />
             <Route path="problems/:id/edit" element={<ProblemForm />} />
           </Route>

@@ -20,14 +20,6 @@ export default function MobileMenu({ open, onClose }) {
           </Link>
         ))}
 
-        <Link
-          to="/explore"
-          onClick={onClose}
-          className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
-        >
-          Explore
-        </Link>
-
         <div className="my-2 border-t border-white/10" />
 
         <Link

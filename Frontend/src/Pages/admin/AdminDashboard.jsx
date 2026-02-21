@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, PlusCircle } from "lucide-react";
+import { FileText, PlusCircle , Users} from "lucide-react";
 import CardAction from "../../components/admin/CardAction";
 
 export default function AdminDashboard() {
@@ -37,7 +37,14 @@ export default function AdminDashboard() {
           toText="Open"
           onClick={() => navigate("/admin/problems")}
         />
-
+       <CardAction
+  icon={Users}
+  title="All Users"
+  desc="View all users and change roles (admin/user)."
+  colorClass="bg-gradient-to-r from-emerald-500 to-teal-500"
+  toText="Open"
+  onClick={() => navigate("/admin/users")}
+/>
         <CardAction
           icon={PlusCircle}
           title="Create New Problem"

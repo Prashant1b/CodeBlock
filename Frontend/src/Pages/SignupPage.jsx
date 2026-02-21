@@ -71,6 +71,10 @@ export default function Signup() {
               className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 text-sm outline-none focus:border-amber-400/60"
               placeholder="Min 6 characters"
             />
+            <p className="mt-1 text-xs text-slate-400">
+Password must be at least 8 characters long and include
+uppercase, lowercase, number, and special character.
+</p>
           </div>
 
           <button

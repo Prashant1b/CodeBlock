@@ -55,11 +55,11 @@ export default function Header() {
               />
             </div>
 
-            {/* Center */}
-            <SearchBar />
-
             {/* Right */}
-            <Actions onMobileSearch={() => setMobileSearchOpen(true)} />
+           <Actions
+  showSearch={false}
+  onMobileSearch={() => setMobileSearchOpen(true)}
+/>
           </div>
 
           <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />

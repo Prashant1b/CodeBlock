@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const from = loc.state?.from || "/";
+  const from = loc.state?.from || "/problems";
 
   const onSubmit = async (e) => {
     e.preventDefault();

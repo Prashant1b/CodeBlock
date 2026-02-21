@@ -10,22 +10,46 @@ export default function ProblemsList() {
   const [err, setErr] = useState("");
   const [data, setData] = useState({ problems: [], page: 1, totalPages: 1 });
 
-  const fetchList = async (page = 1) => {
+const fetchList = async (page = 1) => {
+  console.log("fetchList start", page);
+  setLoading(true);
+  setErr("");
+  try {
+    const res = await adminProblemsApi.list({ page, limit: 10 });
+    console.log("API response:", res.data);
+    setData(res.data);
+  } catch (e) {
+    console.log("fetchList error:", e);
+    setErr(e?.response?.data || e.message || "Failed to load problems");
+  } finally {
+    console.log("fetchList finally -> setLoading(false)");
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  let alive = true;
+
+  (async () => {
     setLoading(true);
     setErr("");
     try {
-      const res = await adminProblemsApi.list({ page, limit: 10 });
+      const res = await adminProblemsApi.lists({ page: 1, limit: 10 });
+      if (!alive) return;
       setData(res.data);
     } catch (e) {
+      if (!alive) return;
       setErr(e?.response?.data || e.message || "Failed to load problems");
     } finally {
+      if (!alive) return;
       setLoading(false);
     }
-  };
+  })();
 
-  useEffect(() => {
-    fetchList(1);
-  }, []);
+  return () => {
+    alive = false;
+  };
+}, []);
 
   const onDelete = async (id) => {
     if (!confirm("Delete this problem?")) return;
@@ -85,7 +109,9 @@ export default function ProblemsList() {
                         </span>
                       </td>
                       <td className="py-4 text-slate-600">
-                        {(p.tags || p.tag || []).slice?.(0, 4)?.join?.(", ") || "-"}
+                        {Array.isArray(p.tags)
+  ? (p.tags.slice(0, 4).join(", ") || "-")
+  : (typeof p.tags === "string" ? p.tags : "-")}
                       </td>
                       <td className="py-4">
                         <div className="flex justify-end gap-2">

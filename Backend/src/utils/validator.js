@@ -7,8 +7,15 @@ const validate=(data)=>{
         throw new Error("Field Missing");
     if(!validator.isEmail(data.emailid))
         throw new Error("Email format not matched")
-    if(!validator.isStrongPassword(data.password))
-        throw new Error("Weak Password")
+   if(!validator.isStrongPassword(data.password, {
+  minLength: 8,
+  minLowercase: 1,
+  minUppercase: 1,
+  minNumbers: 1,
+  minSymbols: 1
+})) {
+   throw new Error("Weak Password")
+}
 }
 
 module.exports=validate;

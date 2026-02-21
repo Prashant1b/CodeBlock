@@ -118,8 +118,7 @@ const getallproblem = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10; // Items per page
     const skip = (page - 1) * limit; // How many items to skip
     const total = await Problem.countDocuments();
-    const problems = await Problem.find().select('_id title difficulty tag ').skip(skip).limit(limit);
-
+    const problems = await Problem.find().select('_id title difficulty tags ').skip(skip).limit(limit);
     if (problems.length === 0) throw new Error("Problems are missing");
     res.status(200).json({
       page,
@@ -178,5 +177,46 @@ const SubmittedProblem=async(req,res)=>{
    }
 }
 
+const allUser=async(req,res)=>{
+   try {
+     const users = await User.find().select("_id firstname emailid role createdAt").sort({ createdAt: -1 });
+      res.json({ users });
+   } catch (error) {
+      res.status(500).send("Error "+error.message);
+   }
 
-module.exports = { createproblem, updateproblem, getproblemById, getallproblem, deleteproblem, solvedAllproblemByUser,SubmittedProblem };
+}
+
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const userId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).send("Invalid User ID");
+    }
+
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).send("Invalid role (use 'user' or 'admin')");
+    }
+
+    // optional safety: admin apna role remove na kare
+    if (String(req.user._id) === String(userId) && role !== "admin") {
+      return res.status(400).send("You can't remove your own admin role");
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true }
+    ).select("_id firstname emailid role createdAt");
+
+    if (!updated) return res.status(404).send("User not found");
+
+    return res.status(200).json({ user: updated });
+  } catch (error) {
+    return res.status(500).send("Error " + error.message);
+  }
+};
+
+module.exports = { createproblem, updateproblem, getproblemById, getallproblem, deleteproblem, solvedAllproblemByUser,SubmittedProblem ,allUser,updateUserRole};
