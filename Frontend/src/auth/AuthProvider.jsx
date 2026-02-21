@@ -41,10 +41,11 @@ const refreshProfile = useCallback(async () => {
     return res.data;
   };
 
-  const logout = async () => {
-    await authApi.logout();
-    setUser(null);
-  };
+ const logout = async () => {
+  await authApi.logout();
+  localStorage.removeItem("user_cache"); 
+  setUser(null);
+};
 
   const updatePassword = async (data) => {
     const res = await userApi.updatePassword(data);

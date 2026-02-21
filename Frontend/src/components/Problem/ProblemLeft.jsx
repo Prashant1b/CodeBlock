@@ -1,7 +1,9 @@
-// src/components/problem/ProblemLeft.jsx
+import SubmissionsTab from "../../Pages/SubmissionTab";
 import { useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 
 export default function ProblemLeft({ problem }) {
+  const { id } = useParams();
   const [tab, setTab] = useState("Description");
 
   const tabs = ["Description", "Editorial", "Solutions", "Submissions"];
@@ -169,15 +171,7 @@ export default function ProblemLeft({ problem }) {
             </div>
 
             {/* Helpful hint */}
-            {tab === "Submissions" && (
-              <div className="mt-3 text-xs text-slate-500">
-                Tip: You already have an endpoint like{" "}
-                <span className="text-slate-300">
-                  /leetcode/submittedproblem/:pid
-                </span>{" "}
-                (just fix backend typo: <b>length</b>).
-              </div>
-            )}
+            {tab === "Submissions" && <SubmissionsTab pid={id} />}
           </div>
         )}
       </div>

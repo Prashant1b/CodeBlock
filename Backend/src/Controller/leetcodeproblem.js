@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { getlanguagebyid, submitBatch, submittoken } = require('../utils/language');
 const mongoose = require('mongoose');
 const User = require('../models/user');
+const Submission =require("../models/submissionschema")
 
 const createproblem = async (req, res) => {
   const { title, description, difficulty, tags,
@@ -168,7 +169,8 @@ const SubmittedProblem=async(req,res)=>{
    try {
        const problemid=req.params.pid;
        const userid=req.user._id;
-       const ans=await Submission.find({userid,problemid});
+       const ans = await Submission.find({ userid, problemid })
+      .sort({ createdAt: -1 });
        if(ans.lenght==0)
         return res.status(200).send("Submit Your First Problem");
         res.status(200).send(ans);
