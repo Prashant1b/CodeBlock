@@ -64,7 +64,16 @@ const UserSubmission = async (req, res) => {
             }
         }
 
-        res.status(200).send("Submission Saved Sucessfully" + submittedproblem);
+        return res.status(200).json({
+  ok: true,
+  submissionId: submittedproblem._id,
+  status: submittedproblem.status,            // accepted | wrong | error
+  passed: submittedproblem.testcasepassed,
+  total: submittedproblem.testcasetotal,
+  runtimeMs: submittedproblem.runtime,        // ms
+  memoryKb: submittedproblem.memory,          // judge0 gives KB
+  errorMessage: submittedproblem.errormessage || "",
+});
     } catch (error) {
         res.status(400).send("Error " + error.message);
     }
@@ -90,7 +99,26 @@ const runCode=async(req,res)=>{
         const resulttoken = submitresult.map((value) => value.token)
         const testresult = await submittoken(resulttoken);
 
-        res.status(200).send(testresult);
+      const clean = testresult.map((t, idx) => ({
+  id: idx + 1,
+  statusId: t.status_id,
+  status: t.status?.description || "Unknown",
+  input: problemfetch.visibletestcases[idx]?.input ?? "",
+  expected: problemfetch.visibletestcases[idx]?.output ?? "",
+  output: (t.stdout || "").trim(),
+  timeMs: Math.round(parseFloat(t.time || "0") * 1000),
+  memoryKb: t.memory || 0,
+  error: t.stderr || t.compile_output || "",
+}));
+
+const overall =
+  clean.every((x) => x.statusId === 3) ? "passed" : "failed";
+
+return res.status(200).json({
+  ok: true,
+  overall,
+  testcases: clean,
+});
     } catch (error) {
         res.status(400).send("Error " + error.message);
     }

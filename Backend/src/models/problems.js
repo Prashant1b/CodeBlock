@@ -18,7 +18,6 @@ const problemschema=new mongoose.Schema({
     tags:{
         type:String,
          required:true,
-         enum:['Array',"linkedlist","graph","dp"]
     },
     visibletestcases:[{
         input:{
