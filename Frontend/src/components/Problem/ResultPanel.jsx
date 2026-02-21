@@ -28,21 +28,17 @@ export default function ResultPanel({ runResult, submitResult, active }) {
     </div>
   );
 }
-function RunResultUI({ runData }) {
-  const safeRun = Array.isArray(runData) ? runData : [];
+
+function RunResultUI({ data }) {
+  const safeRun = Array.isArray(data) ? data : Array.isArray(data?.testcases) ? data.testcases : [];
 
   if (safeRun.length === 0) {
-    return (
-      <div className="text-sm text-slate-400">
-        No test result received.
-      </div>
-    );
+    return <div className="text-sm text-slate-400">No test result received.</div>;
   }
+  const getStatusId = (t) => t.statusId ?? t.status?.id ?? t.status_id;
 
   const total = safeRun.length;
-  const passed = safeRun.filter(
-    (t) => (t.status?.id ?? t.status_id) === 3
-  ).length;
+  const passed = safeRun.filter((t) => getStatusId(t) === 3).length;
 
   return (
     <div>
@@ -52,26 +48,23 @@ function RunResultUI({ runData }) {
 
       <div className="mt-3 space-y-3">
         {safeRun.map((t, i) => {
-          const statusId = t.status?.id ?? t.status_id;
-          const statusText =
-            t.status?.description || `status_id: ${statusId}`;
+          const statusId = getStatusId(t);
+          const statusText = t.status ?? t.status?.description ?? `status_id: ${statusId}`;
+
+          // ✅ support old+new fields
+          const input = t.input ?? t.stdin ?? "";
+          const expected = t.expected ?? t.expected_output ?? "";
+          const output = (t.output ?? t.stdout ?? "").trim();
+          const err = t.error ?? t.stderr ?? t.compile_output ?? "";
 
           return (
             <div
-              key={t.token || i}
+              key={t.token || t.id || i}
               className="rounded-xl border border-white/10 bg-white/5 p-3"
             >
               <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-400">
-                  Case {i + 1}
-                </div>
-                <div
-                  className={`text-xs ${
-                    statusId === 3
-                      ? "text-green-300"
-                      : "text-red-300"
-                  }`}
-                >
+                <div className="text-xs text-slate-400">Case {i + 1}</div>
+                <div className={`text-xs ${statusId === 3 ? "text-green-300" : "text-red-300"}`}>
                   {statusText}
                 </div>
               </div>
@@ -79,31 +72,21 @@ function RunResultUI({ runData }) {
               <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                 <div>
                   <div className="text-slate-500 mb-1">Input</div>
-                  <pre className="text-slate-200">
-                    {t.stdin || ""}
-                  </pre>
+                  <pre className="text-slate-200 whitespace-pre-wrap">{input}</pre>
                 </div>
 
                 <div>
                   <div className="text-slate-500 mb-1">Your Output</div>
-                  <pre className="text-slate-200">
-                    {t.stdout || ""}
-                  </pre>
+                  <pre className="text-slate-200 whitespace-pre-wrap">{output}</pre>
                 </div>
 
                 <div>
                   <div className="text-slate-500 mb-1">Expected</div>
-                  <pre className="text-slate-200">
-                    {t.expected_output || ""}
-                  </pre>
+                  <pre className="text-slate-200 whitespace-pre-wrap">{expected}</pre>
                 </div>
               </div>
 
-              {(t.stderr || t.compile_output) && (
-                <div className="mt-3 text-xs text-red-300">
-                  {t.stderr || t.compile_output}
-                </div>
-              )}
+              {err && <div className="mt-3 text-xs text-red-300 whitespace-pre-wrap">{err}</div>}
             </div>
           );
         })}
@@ -113,8 +96,6 @@ function RunResultUI({ runData }) {
 }
 
 function SubmitResultUI({ data }) {
-  // abhi tumhara submit endpoint string return kar raha hai.
-  // UI me string hi show kar dete hai.
   return (
     <div className="text-sm text-slate-200 whitespace-pre-wrap">
       {typeof data === "string" ? data : JSON.stringify(data, null, 2)}
