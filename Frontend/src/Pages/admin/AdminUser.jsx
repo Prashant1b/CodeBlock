@@ -1,11 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-
-const api = axios.create({
-  baseURL: "https://codeblock-0wvh.onrender.com",
-  withCredentials: true,
-});
-
+import api from "../../api/https"
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
@@ -15,7 +10,7 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/leetcode/users"); // ✅ matches backend route
+      const res = await api.get("/leetcode/users"); 
       setUsers(res.data?.users || []);
     } catch (e) {
       alert(e?.response?.data?.message || "Failed to load users");
