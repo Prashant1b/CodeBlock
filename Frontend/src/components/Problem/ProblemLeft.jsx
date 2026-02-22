@@ -165,10 +165,6 @@ export default function ProblemLeft({ problem }) {
         {tab !== "Description" && (
           <div className="rounded-xl border border-white/10 bg-black/20 p-4">
             <div className="text-sm text-slate-200 font-semibold">{tab}</div>
-            <div className="mt-2 text-sm text-slate-400">
-              {tab} section is currently a placeholder. You can connect an API
-              later (editorial/solutions/submissions).
-            </div>
 
             {/* Helpful hint */}
             {tab === "Submissions" && <SubmissionsTab pid={id} />}

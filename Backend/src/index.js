@@ -9,7 +9,6 @@
   const problemrouter = require('./route/problemsetter');
   const cors = require("cors");
   const submitrouter=require('./route/Submit');
-
   app.use(
   cors({
     origin: ["https://codeblock-frontend.onrender.com"],
