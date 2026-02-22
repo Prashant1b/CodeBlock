@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "https://codeblock-0wvh.onrender.com",
   withCredentials: true,
 });
 
