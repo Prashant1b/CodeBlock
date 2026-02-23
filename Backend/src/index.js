@@ -11,7 +11,7 @@
   const submitrouter=require('./route/Submit');
   app.use(
   cors({
-    origin: ["https://codeblock-frontend.onrender.com"],
+    origin: ["https://codeblocks.onrender.com"],
     credentials: true,
   })
 );
