@@ -44,7 +44,6 @@ function App() {
             element={
               <AdminLayout
                 userName={user?.firstname || user?.emailid || "Admin"}
-                onLogout={logout}
               />
             }
           >

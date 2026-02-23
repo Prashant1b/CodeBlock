@@ -8,10 +8,10 @@ const linkBase =
 const linkInactive = "text-slate-600 hover:bg-slate-100";
 const linkActive = "bg-slate-900 text-white shadow";
 
-export default function AdminLayout({ userName, onLogout }) {
+export default function AdminLayout({ userName}) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50">
-      <AdminTopbar userName={userName} onLogout={onLogout} />
+      <AdminTopbar userName={userName} />
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-4 py-6 md:grid-cols-[240px_1fr]">
         {/* Sidebar */}
