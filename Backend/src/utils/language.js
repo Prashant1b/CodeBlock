@@ -42,11 +42,7 @@ async function fetchData() {
 return await fetchData();
 }
 
-const waiting=async(time)=>{
-  setTimeout(()=>{
-    return 1;
-  },time);
-}
+const waiting = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
 const submittoken=async(resulttoken)=>{
 const options = {
