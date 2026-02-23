@@ -147,6 +147,19 @@ useEffect(() => {
     Reset Password
   </Link>
 </div>
+{user?.role === "admin" && (
+  <div className="mt-3">
+    <Link
+      to="/admin"
+      className="block w-full h-11 text-center leading-[44px]
+                 rounded-2xl border border-indigo-400/30
+                 bg-indigo-500/10 text-indigo-200 font-semibold
+                 hover:bg-indigo-500/15 transition"
+    >
+      Go to Admin Panel
+    </Link>
+  </div>
+)}
           <div className="mt-6 space-y-2">
             <button
               disabled={loading}

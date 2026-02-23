@@ -1,7 +1,7 @@
 export const NAV_LINKS = [
   { to: "/problems", label: "Problems" },
   { to: "/contest", label: "Contest" },
-  { to: "/admin", label: "Discuss" },
+  { to: "/discuss", label: "Discuss" },
 ];
 
 export const EXPLORE_LINKS = [
