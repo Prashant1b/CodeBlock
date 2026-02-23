@@ -5,19 +5,124 @@ import TagInput from "../../components/admin/TagInput";
 import TestcaseEditor from "../../components/admin/TestcaseEditor";
 import RefSolutionEditor from "../../components/admin/RefSolutionEditor";
 
+// UI state shape (keep as-is for editors)
 const empty = {
   title: "",
   description: "",
   difficulty: "Easy",
   tags: [],
+
   visibletestcases: [],
   hiddentestcases: [],
+
+  // UI uses `code`, DB schema uses `initialcode` (we map on save/load)
   startcode: [
     { language: "cpp", code: "" },
     { language: "java", code: "" },
     { language: "python", code: "" },
+    { language: "javascript", code: "" },
   ],
-  refsolution: [{ language: "cpp", solution: "" }],
+
+  refsolution: [
+    { language: "cpp", solution: "" },
+    { language: "java", solution: "" },
+    { language: "python", solution: "" },
+    { language: "javascript", solution: "" },
+  ],
+};
+
+// ---------- helpers to match your EXISTING Mongo schema ----------
+const stripWrappingQuotes = (s) => {
+  const t = String(s ?? "").trim();
+  // remove only one pair of wrapping quotes: "abc" or 'abc'
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+    return t.slice(1, -1);
+  }
+  return t;
+};
+
+const normalizeMultiline = (s) => stripWrappingQuotes(s).replace(/\r\n/g, "\n");
+
+const tagsStringToArray = (tagsStr) => {
+  if (Array.isArray(tagsStr)) return tagsStr; // already array (just in case)
+  return String(tagsStr ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+};
+
+const tagsArrayToString = (tagsArr) => {
+  if (!Array.isArray(tagsArr)) return String(tagsArr ?? "").trim();
+  return tagsArr.map((x) => String(x).trim()).filter(Boolean).join(", ");
+};
+
+// DB -> UI mapping (important for edit mode)
+const fromDbToForm = (p) => {
+  const startcodeUi = Array.isArray(p?.startcode)
+    ? p.startcode.map((s) => ({
+        language: String(s?.language ?? "").trim(),
+        code: String(s?.initialcode ?? ""), // DB initialcode -> UI code
+      }))
+    : [];
+
+  const refsolutionUi = Array.isArray(p?.refsolution)
+    ? p.refsolution.map((r) => ({
+        language: String(r?.language ?? "").trim(),
+        solution: String(r?.solution ?? ""),
+      }))
+    : [];
+
+  return {
+    ...empty,
+    ...p,
+    tags: typeof p?.tags === "string" ? tagsStringToArray(p.tags) : (p?.tags || []),
+
+    startcode: startcodeUi.length ? startcodeUi : empty.startcode,
+    refsolution: refsolutionUi.length ? refsolutionUi : empty.refsolution,
+
+    visibletestcases: p?.visibletestcases || [],
+    hiddentestcases: p?.hiddentestcases || [],
+  };
+};
+
+// UI -> DB mapping (important for save)
+const toDbPayload = (form) => {
+  const visibletestcases = (form.visibletestcases || []).map((tc) => ({
+    input: normalizeMultiline(tc?.input),
+    output: normalizeMultiline(tc?.output),
+    // your schema requires explanation, so always send something
+    explanation: normalizeMultiline(tc?.explanation || "N/A"),
+  }));
+
+  const hiddentestcases = (form.hiddentestcases || []).map((tc) => ({
+    input: normalizeMultiline(tc?.input),
+    output: normalizeMultiline(tc?.output),
+  }));
+
+  const startcode = (form.startcode || []).map((s) => ({
+    language: String(s?.language ?? "").trim().toLowerCase(),
+    // schema expects initialcode (NOT code)
+    initialcode: String(s?.code ?? ""),
+  }));
+
+  const refsolution = (form.refsolution || []).map((r) => ({
+    language: String(r?.language ?? "").trim().toLowerCase(),
+    solution: String(r?.solution ?? ""),
+  }));
+
+  return {
+    title: String(form.title ?? ""),
+    description: String(form.description ?? ""),
+    difficulty: String(form.difficulty ?? "Easy"),
+
+    // your schema expects tags as STRING
+    tags: tagsArrayToString(form.tags),
+
+    visibletestcases,
+    hiddentestcases,
+    startcode,
+    refsolution,
+  };
 };
 
 export default function ProblemForm() {
@@ -40,11 +145,7 @@ export default function ProblemForm() {
       try {
         const res = await adminProblemsApi.getById(id);
         const p = res.data;
-        setForm({
-          ...empty,
-          ...p,
-          tags: p.tags || [],
-        });
+        setForm(fromDbToForm(p));
       } catch (e) {
         setErr(e?.response?.data || e.message || "Failed to load problem");
       } finally {
@@ -56,10 +157,16 @@ export default function ProblemForm() {
   const setField = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const validate = () => {
-    if (!form.title.trim()) return "Title is required";
-    if (!form.description.trim()) return "Description is required";
+    if (!String(form.title || "").trim()) return "Title is required";
+    if (!String(form.description || "").trim()) return "Description is required";
     if (!form.refsolution?.length) return "Add at least 1 reference solution";
     if (!form.visibletestcases?.length) return "Add at least 1 visible testcase";
+
+    // because schema requires explanation -> ensure at least 1 has explanation (or we add N/A anyway)
+    for (const tc of form.visibletestcases || []) {
+      if (!String(tc?.input ?? "").trim()) return "Visible testcase input is required";
+      if (!String(tc?.output ?? "").trim()) return "Visible testcase output is required";
+    }
     return "";
   };
 
@@ -70,21 +177,13 @@ export default function ProblemForm() {
     setSaving(true);
     setErr("");
     try {
-      const payload = {
-        ...form,
-        // ensure arrays
-        tags: form.tags || [],
-        visibletestcases: form.visibletestcases || [],
-        hiddentestcases: form.hiddentestcases || [],
-        refsolution: form.refsolution || [],
-      };
+      const payload = toDbPayload(form);
 
       if (isEdit) {
         await adminProblemsApi.update(id, payload);
       } else {
         await adminProblemsApi.create(payload);
       }
-
       navigate("/admin/problems");
     } catch (e) {
       setErr(e?.response?.data || e.message || "Save failed");
@@ -166,6 +265,9 @@ export default function ProblemForm() {
 
               <div className="md:col-span-2">
                 <TagInput value={form.tags} onChange={(v) => setField("tags", v)} />
+                <p className="mt-1 text-xs text-slate-500">
+                  (Saved to DB as comma-separated string because your schema uses tags: String)
+                </p>
               </div>
 
               <div className="md:col-span-2">
@@ -198,7 +300,8 @@ export default function ProblemForm() {
           <section className="rounded-3xl border border-slate-200 bg-white/20 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
             <div className="text-sm font-bold text-slate-800">Start Code (Optional)</div>
             <p className="mt-1 text-xs text-slate-500">
-              If your schema expects a different format, you can keep this as is or adjust.
+              Your Mongo schema expects <code>startcode[].initialcode</code>. UI edits <code>code</code>, saved as
+              <code>initialcode</code>.
             </p>
 
             <div className="mt-4 space-y-3">
