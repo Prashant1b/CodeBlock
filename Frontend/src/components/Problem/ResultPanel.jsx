@@ -1,24 +1,46 @@
-export default function ResultPanel({ runResult, submitResult, active }) {
+
+import React from "react";
+export default function ResultPanel({
+  runResult,
+  runError,
+  runLoading,
+  submitResult,
+  submitError,
+  submitLoading,
+  active,
+}) {
+  const isRun = active === "run";
+
+  const loading = isRun ? runLoading : submitLoading;
+  const err = isRun ? runError : submitError;
+  const data = isRun ? runResult : submitResult;
+
   return (
     <div className="p-4">
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold text-slate-200">Test Result</span>
         <span className="text-xs text-slate-500">
-          {active === "run" ? "Visible testcases" : "Hidden testcases"}
+          {isRun ? "Visible testcases" : "Hidden testcases"}
         </span>
       </div>
 
       <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-        {active === "run" ? (
-          runResult ? (
-            <RunResultUI data={runResult} />
+        {loading ? (
+          <div className="text-sm text-slate-400">Running...</div>
+        ) : err ? (
+          <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-200 whitespace-pre-wrap">
+            {err}
+          </div>
+        ) : isRun ? (
+          data ? (
+            <RunResultUI data={data} />
           ) : (
             <div className="text-sm text-slate-400">
               Click <b>Run</b> to test against visible testcases.
             </div>
           )
-        ) : submitResult ? (
-          <SubmitResultUI data={submitResult} />
+        ) : data ? (
+          <SubmitResultUI data={data} />
         ) : (
           <div className="text-sm text-slate-400">
             Click <b>Submit</b> to run against hidden testcases.
@@ -30,11 +52,16 @@ export default function ResultPanel({ runResult, submitResult, active }) {
 }
 
 function RunResultUI({ data }) {
-  const safeRun = Array.isArray(data) ? data : Array.isArray(data?.testcases) ? data.testcases : [];
+  const safeRun = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.testcases)
+    ? data.testcases
+    : [];
 
   if (safeRun.length === 0) {
     return <div className="text-sm text-slate-400">No test result received.</div>;
   }
+
   const getStatusId = (t) => t.statusId ?? t.status?.id ?? t.status_id;
 
   const total = safeRun.length;
@@ -49,12 +76,15 @@ function RunResultUI({ data }) {
       <div className="mt-3 space-y-3">
         {safeRun.map((t, i) => {
           const statusId = getStatusId(t);
-          const statusText = t.status ?? t.status?.description ?? `status_id: ${statusId}`;
+          const statusText =
+            t.status?.description ??
+            t.status_description ??
+            (typeof t.status === "string" ? t.status : null) ??
+            `status_id: ${statusId}`;
 
-          // ✅ support old+new fields
           const input = t.input ?? t.stdin ?? "";
           const expected = t.expected ?? t.expected_output ?? "";
-          const output = (t.output ?? t.stdout ?? "").trim();
+          const output = String(t.output ?? t.stdout ?? "").trim();
           const err = t.error ?? t.stderr ?? t.compile_output ?? "";
 
           return (
@@ -69,24 +99,26 @@ function RunResultUI({ data }) {
                 </div>
               </div>
 
-              <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="mt-2 grid grid-cols-1 gap-3 text-xs md:grid-cols-3">
                 <div>
-                  <div className="text-slate-500 mb-1">Input</div>
-                  <pre className="text-slate-200 whitespace-pre-wrap">{input}</pre>
+                  <div className="mb-1 text-slate-500">Input</div>
+                  <pre className="whitespace-pre-wrap text-slate-200">{input}</pre>
                 </div>
 
                 <div>
-                  <div className="text-slate-500 mb-1">Your Output</div>
-                  <pre className="text-slate-200 whitespace-pre-wrap">{output}</pre>
+                  <div className="mb-1 text-slate-500">Your Output</div>
+                  <pre className="whitespace-pre-wrap text-slate-200">{output}</pre>
                 </div>
 
                 <div>
-                  <div className="text-slate-500 mb-1">Expected</div>
-                  <pre className="text-slate-200 whitespace-pre-wrap">{expected}</pre>
+                  <div className="mb-1 text-slate-500">Expected</div>
+                  <pre className="whitespace-pre-wrap text-slate-200">{expected}</pre>
                 </div>
               </div>
 
-              {err && <div className="mt-3 text-xs text-red-300 whitespace-pre-wrap">{err}</div>}
+              {err ? (
+                <div className="mt-3 whitespace-pre-wrap text-xs text-red-300">{String(err)}</div>
+              ) : null}
             </div>
           );
         })}
