@@ -1,5 +1,5 @@
 import axios from "axios"
 export const http = axios.create({
-  baseURL: "https://codeblock-0wvh.onrender.com",
+    baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
 });
