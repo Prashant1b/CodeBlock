@@ -154,9 +154,9 @@ export default function ProblemLeft({ problem }) {
             {/* Notes */}
             <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
               <div className="text-xs text-slate-400">
-                Note: <span className="text-slate-300">Submit</span> runs on
-                hidden testcases. <span className="text-slate-300">Run</span>{" "}
-                runs on visible testcases.
+                Note: <span className="text-slate-300">Login </span> to view 
+                the description. <span className="text-slate-300">Login</span>{" "}
+                to run or submission.
               </div>
             </div>
           </div>
