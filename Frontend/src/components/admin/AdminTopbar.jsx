@@ -1,7 +1,7 @@
 import React from "react";
-import { LogOut, ShieldCheck } from "lucide-react";
+import {  ShieldCheck } from "lucide-react";
 
-export default function AdminTopbar({ userName = "Admin", onLogout }) {
+export default function AdminTopbar({ userName = "Admin"}) {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/20 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
@@ -23,14 +23,6 @@ export default function AdminTopbar({ userName = "Admin", onLogout }) {
               Active
             </div>
           </div>
-
-          <button
-            onClick={onLogout}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-            type="button"
-          >
-            Logout <LogOut className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </header>
