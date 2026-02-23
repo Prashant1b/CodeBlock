@@ -41,7 +41,24 @@ const stripWrappingQuotes = (s) => {
   return t;
 };
 
-const normalizeMultiline = (s) => stripWrappingQuotes(s).replace(/\r\n/g, "\n");
+// normalize CRLF and quotes
+const normalizeMultiline = (s) =>
+  stripWrappingQuotes(String(s ?? "")).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+// ✅ IMPORTANT: normalize language to keys used by Judge0 mapping
+const normalizeLang = (lang) => {
+  const s = String(lang ?? "").trim().toLowerCase();
+  if (!s) return s;
+
+  // common aliases -> canonical
+  if (s === "c++" || s === "cplusplus" || s === "cpp" || s === "cxx") return "cpp";
+  if (s === "js" || s === "node" || s === "nodejs" || s === "javascript") return "javascript";
+  if (s === "py" || s === "python3" || s === "python") return "python";
+  if (s === "java") return "java";
+
+  // fallback: keep lowercase
+  return s;
+};
 
 const tagsStringToArray = (tagsStr) => {
   if (Array.isArray(tagsStr)) return tagsStr; // already array (just in case)
@@ -60,14 +77,14 @@ const tagsArrayToString = (tagsArr) => {
 const fromDbToForm = (p) => {
   const startcodeUi = Array.isArray(p?.startcode)
     ? p.startcode.map((s) => ({
-        language: String(s?.language ?? "").trim(),
+        language: normalizeLang(s?.language || ""), // ✅ normalize
         code: String(s?.initialcode ?? ""), // DB initialcode -> UI code
       }))
     : [];
 
   const refsolutionUi = Array.isArray(p?.refsolution)
     ? p.refsolution.map((r) => ({
-        language: String(r?.language ?? "").trim(),
+        language: normalizeLang(r?.language || ""), // ✅ normalize
         solution: String(r?.solution ?? ""),
       }))
     : [];
@@ -75,7 +92,7 @@ const fromDbToForm = (p) => {
   return {
     ...empty,
     ...p,
-    tags: typeof p?.tags === "string" ? tagsStringToArray(p.tags) : (p?.tags || []),
+    tags: typeof p?.tags === "string" ? tagsStringToArray(p.tags) : p?.tags || [],
 
     startcode: startcodeUi.length ? startcodeUi : empty.startcode,
     refsolution: refsolutionUi.length ? refsolutionUi : empty.refsolution,
@@ -100,13 +117,13 @@ const toDbPayload = (form) => {
   }));
 
   const startcode = (form.startcode || []).map((s) => ({
-    language: String(s?.language ?? "").trim().toLowerCase(),
+    language: normalizeLang(s?.language), // ✅ critical
     // schema expects initialcode (NOT code)
     initialcode: String(s?.code ?? ""),
   }));
 
   const refsolution = (form.refsolution || []).map((r) => ({
-    language: String(r?.language ?? "").trim().toLowerCase(),
+    language: normalizeLang(r?.language), // ✅ critical
     solution: String(r?.solution ?? ""),
   }));
 
@@ -162,11 +179,23 @@ export default function ProblemForm() {
     if (!form.refsolution?.length) return "Add at least 1 reference solution";
     if (!form.visibletestcases?.length) return "Add at least 1 visible testcase";
 
-    // because schema requires explanation -> ensure at least 1 has explanation (or we add N/A anyway)
+    // visible tcs basic validation
     for (const tc of form.visibletestcases || []) {
       if (!String(tc?.input ?? "").trim()) return "Visible testcase input is required";
       if (!String(tc?.output ?? "").trim()) return "Visible testcase output is required";
     }
+
+    // ✅ ensure all languages are supported (prevents Judge0 runtime errors)
+    const okLang = new Set(["cpp", "java", "python", "javascript"]);
+    for (const r of form.refsolution || []) {
+      const l = normalizeLang(r?.language);
+      if (l && !okLang.has(l)) return `Unsupported reference language: ${String(r?.language)}`;
+    }
+    for (const s of form.startcode || []) {
+      const l = normalizeLang(s?.language);
+      if (l && !okLang.has(l)) return `Unsupported startcode language: ${String(s?.language)}`;
+    }
+
     return "";
   };
 
@@ -326,10 +355,7 @@ export default function ProblemForm() {
             </div>
           </section>
 
-          <RefSolutionEditor
-            value={form.refsolution}
-            onChange={(v) => setField("refsolution", v)}
-          />
+          <RefSolutionEditor value={form.refsolution} onChange={(v) => setField("refsolution", v)} />
         </div>
       </div>
     </div>
