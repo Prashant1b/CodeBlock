@@ -34,7 +34,7 @@ function App() {
         <Route path="/problem/:id" element={<ProblemSolve />} />
 
         <Route element={<RequireAuth />}>
-          <Route path="profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
@@ -50,7 +50,7 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="problems" element={<ProblemsList />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="problems/new" element={<ProblemForm />} />
             <Route path="problems/:id/edit" element={<ProblemForm />} />
           </Route>
