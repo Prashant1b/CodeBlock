@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import api from "../../api/https"
+const api = axios.create({
+  baseURL: "https://codeblock-0wvh.onrender.com",
+  withCredentials: true,
+});
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");

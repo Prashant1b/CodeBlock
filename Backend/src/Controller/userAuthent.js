@@ -33,8 +33,8 @@ const register = async (req, res) => {
 
     res.cookie("token", token, {
   httpOnly: true,
-  sameSite: "lax",
-  secure: false,
+  sameSite:  "none",    
+  secure: true,
   maxAge: 60 * 60 * 1000,
 });
 
@@ -86,12 +86,13 @@ const login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.cookie("token", token,{
+   res.cookie("token", token, {
   httpOnly: true,
-  sameSite: "lax",
-  secure: false,
+  sameSite:  "none",    
+  secure: true,
   maxAge: 60 * 60 * 1000,
 });
+
 
     const safeUser = await User.findById(user._id).select("-password");
     return res.status(200).json({ message: "Logged in", user: safeUser });
