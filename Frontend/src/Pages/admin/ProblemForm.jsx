@@ -5,7 +5,6 @@ import TagInput from "../../components/admin/TagInput";
 import TestcaseEditor from "../../components/admin/TestcaseEditor";
 import RefSolutionEditor from "../../components/admin/RefSolutionEditor";
 
-// UI state shape (keep as-is for editors)
 const empty = {
   title: "",
   description: "",
@@ -15,7 +14,6 @@ const empty = {
   visibletestcases: [],
   hiddentestcases: [],
 
-  // UI uses `code`, DB schema uses `initialcode` (we map on save/load)
   startcode: [
     { language: "cpp", code: "" },
     { language: "java", code: "" },
@@ -31,37 +29,31 @@ const empty = {
   ],
 };
 
-// ---------- helpers to match your EXISTING Mongo schema ----------
 const stripWrappingQuotes = (s) => {
   const t = String(s ?? "").trim();
-  // remove only one pair of wrapping quotes: "abc" or 'abc'
   if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
     return t.slice(1, -1);
   }
   return t;
 };
 
-// normalize CRLF and quotes
 const normalizeMultiline = (s) =>
   stripWrappingQuotes(String(s ?? "")).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
-// ✅ IMPORTANT: normalize language to keys used by Judge0 mapping
 const normalizeLang = (lang) => {
   const s = String(lang ?? "").trim().toLowerCase();
   if (!s) return s;
 
-  // common aliases -> canonical
   if (s === "c++" || s === "cplusplus" || s === "cpp" || s === "cxx") return "cpp";
   if (s === "js" || s === "node" || s === "nodejs" || s === "javascript") return "javascript";
   if (s === "py" || s === "python3" || s === "python") return "python";
   if (s === "java") return "java";
 
-  // fallback: keep lowercase
+ 
   return s;
 };
 
 const tagsStringToArray = (tagsStr) => {
-  if (Array.isArray(tagsStr)) return tagsStr; // already array (just in case)
+  if (Array.isArray(tagsStr)) return tagsStr; 
   return String(tagsStr ?? "")
     .split(",")
     .map((x) => x.trim())
@@ -73,12 +65,11 @@ const tagsArrayToString = (tagsArr) => {
   return tagsArr.map((x) => String(x).trim()).filter(Boolean).join(", ");
 };
 
-// DB -> UI mapping (important for edit mode)
 const fromDbToForm = (p) => {
   const startcodeUi = Array.isArray(p?.startcode)
     ? p.startcode.map((s) => ({
         language: normalizeLang(s?.language || ""), // ✅ normalize
-        code: String(s?.initialcode ?? ""), // DB initialcode -> UI code
+        code: String(s?.initialcode ?? ""),
       }))
     : [];
 
@@ -102,12 +93,10 @@ const fromDbToForm = (p) => {
   };
 };
 
-// UI -> DB mapping (important for save)
 const toDbPayload = (form) => {
   const visibletestcases = (form.visibletestcases || []).map((tc) => ({
     input: normalizeMultiline(tc?.input),
     output: normalizeMultiline(tc?.output),
-    // your schema requires explanation, so always send something
     explanation: normalizeMultiline(tc?.explanation || "N/A"),
   }));
 
@@ -118,7 +107,6 @@ const toDbPayload = (form) => {
 
   const startcode = (form.startcode || []).map((s) => ({
     language: normalizeLang(s?.language), // ✅ critical
-    // schema expects initialcode (NOT code)
     initialcode: String(s?.code ?? ""),
   }));
 
@@ -132,7 +120,6 @@ const toDbPayload = (form) => {
     description: String(form.description ?? ""),
     difficulty: String(form.difficulty ?? "Easy"),
 
-    // your schema expects tags as STRING
     tags: tagsArrayToString(form.tags),
 
     visibletestcases,
@@ -184,8 +171,6 @@ export default function ProblemForm() {
       if (!String(tc?.input ?? "").trim()) return "Visible testcase input is required";
       if (!String(tc?.output ?? "").trim()) return "Visible testcase output is required";
     }
-
-    // ✅ ensure all languages are supported (prevents Judge0 runtime errors)
     const okLang = new Set(["cpp", "java", "python", "javascript"]);
     for (const r of form.refsolution || []) {
       const l = normalizeLang(r?.language);
@@ -324,15 +309,9 @@ export default function ProblemForm() {
           />
         </div>
 
-        {/* Right */}
         <div className="space-y-5">
           <section className="rounded-3xl border border-slate-200 bg-white/20 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
             <div className="text-sm font-bold text-slate-800">Start Code (Optional)</div>
-            <p className="mt-1 text-xs text-slate-500">
-              Your Mongo schema expects <code>startcode[].initialcode</code>. UI edits <code>code</code>, saved as
-              <code>initialcode</code>.
-            </p>
-
             <div className="mt-4 space-y-3">
               {(form.startcode || []).map((s, idx) => (
                 <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3">

@@ -1,72 +1,108 @@
 import React from "react";
-import { Plus, Trash2 } from "lucide-react";
+
+const emptyTC = { input: "", output: "", explanation: "" };
 
 export default function TestcaseEditor({ title, value = [], onChange }) {
-  const add = () => onChange([...(value || []), { input: "", output: "" }]);
+  const isVisible = String(title || "").toLowerCase().includes("visible");
+  const list = Array.isArray(value) ? value : [];
 
-  const update = (idx, key, v) => {
-    const next = value.map((t, i) => (i === idx ? { ...t, [key]: v } : t));
+  const add = () => {
+    // Visible testcases: include explanation field
+    // Hidden testcases: explanation will be ignored in payload anyway
+    onChange([...(list || []), { ...emptyTC }]);
+  };
+
+  const remove = (idx) => {
+    const next = (list || []).filter((_, i) => i !== idx);
     onChange(next);
   };
 
-  const remove = (idx) => onChange(value.filter((_, i) => i !== idx));
+  const update = (idx, key, val) => {
+    const next = (list || []).map((tc, i) => (i === idx ? { ...tc, [key]: val } : tc));
+    onChange(next);
+  };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white/20 p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-bold text-slate-800">{title}</div>
+    <section className="rounded-3xl border border-slate-200 bg-white/20 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-bold text-slate-800">{title}</div>
+
+          {isVisible ? (
+            <p className="mt-1 text-xs text-slate-500">
+              Explanation is shown to students (Run / Visible testcases).
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">
+              Hidden testcases are used for final evaluation only.
+            </p>
+          )}
+        </div>
+
         <button
-          onClick={add}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
           type="button"
+          onClick={add}
+          className="rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
         >
-          <Plus className="h-4 w-4" /> Add
+          Add
         </button>
       </div>
 
       <div className="mt-4 space-y-3">
-        {(value || []).map((tc, idx) => (
-          <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-slate-500">#{idx + 1}</div>
-              <button
-                onClick={() => remove(idx)}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
-                type="button"
-              >
-                <Trash2 className="h-4 w-4" /> Remove
-              </button>
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Input</div>
-                <textarea
-                  value={tc.input}
-                  onChange={(e) => update(idx, "input", e.target.value)}
-                  className="mt-2 min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="e.g. 5\n1 2 3 4 5"
-                />
+        {list.length === 0 ? (
+          <div className="text-sm text-slate-500">No testcases yet. Click Add.</div>
+        ) : (
+          list.map((tc, idx) => (
+            <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-slate-500">Testcase #{idx + 1}</div>
+                <button
+                  type="button"
+                  onClick={() => remove(idx)}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                >
+                  Remove
+                </button>
               </div>
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Output</div>
-                <textarea
-                  value={tc.output}
-                  onChange={(e) => update(idx, "output", e.target.value)}
-                  className="mt-2 min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="e.g. 15"
-                />
+
+              <div className="mt-3 grid grid-cols-1 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Input</label>
+                  <textarea
+                    value={tc?.input ?? ""}
+                    onChange={(e) => update(idx, "input", e.target.value)}
+                    className="mt-2 min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder={`Example:\nneedle\nhaystack`}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Output</label>
+                  <textarea
+                    value={tc?.output ?? ""}
+                    onChange={(e) => update(idx, "output", e.target.value)}
+                    className="mt-2 min-h-[70px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="e.g. 2"
+                  />
+                </div>
+
+                {/* ✅ Explanation box ONLY for Visible Testcases */}
+                {isVisible && (
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Explanation</label>
+                    <textarea
+                      value={tc?.explanation ?? ""}
+                      onChange={(e) => update(idx, "explanation", e.target.value)}
+                      className="mt-2 min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                      placeholder="Explain why this output is correct..."
+                    />
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ))}
-
-        {(!value || value.length === 0) && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-            No testcases yet. Click <span className="font-semibold">Add</span>.
-          </div>
+          ))
         )}
       </div>
-    </div>
+    </section>
   );
 }
