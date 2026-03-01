@@ -43,6 +43,19 @@ const validateProblemIds = async (problemIds) => {
 
 const listContests = async (req, res) => {
   try {
+    const contests = await Contest.find({ isVisible: true })
+      .populate('createdBy', '_id firstname emailid')
+      .populate('problems', '_id title difficulty')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(contests.map(formatContest));
+  } catch (error) {
+    return res.status(500).send('Error ' + error.message);
+  }
+};
+
+const listContestsForAdmin = async (req, res) => {
+  try {
     const contests = await Contest.find()
       .populate('createdBy', '_id firstname emailid')
       .populate('problems', '_id title difficulty')
@@ -69,6 +82,7 @@ const getContestById = async (req, res) => {
       );
 
     if (!contest) return res.status(404).send('Contest not found');
+    if (contest.isVisible === false) return res.status(404).send('Contest not found');
 
     return res.status(200).json(formatContest(contest));
   } catch (error) {
@@ -78,7 +92,7 @@ const getContestById = async (req, res) => {
 
 const createContest = async (req, res) => {
   try {
-    const { title, description, isActive, startTime, endTime, problems } = req.body;
+    const { title, description, isActive, isVisible, startTime, endTime, problems } = req.body;
 
     if (!title || !startTime || !endTime) {
       return res
@@ -92,6 +106,7 @@ const createContest = async (req, res) => {
       title,
       description: description || '',
       isActive: Boolean(isActive),
+      isVisible: isVisible === undefined ? true : Boolean(isVisible),
       startTime,
       endTime,
       problems,
@@ -118,7 +133,7 @@ const updateContest = async (req, res) => {
     const contest = await Contest.findById(id);
     if (!contest) return res.status(404).send('Contest not found');
 
-    const { title, description, isActive, startTime, endTime, problems } = req.body;
+    const { title, description, isActive, isVisible, startTime, endTime, problems } = req.body;
 
     if (problems !== undefined) {
       await validateProblemIds(problems);
@@ -127,6 +142,7 @@ const updateContest = async (req, res) => {
     if (title !== undefined) contest.title = title;
     if (description !== undefined) contest.description = description;
     if (isActive !== undefined) contest.isActive = Boolean(isActive);
+    if (isVisible !== undefined) contest.isVisible = Boolean(isVisible);
     if (startTime !== undefined) contest.startTime = new Date(startTime);
     if (endTime !== undefined) contest.endTime = new Date(endTime);
 
@@ -157,6 +173,33 @@ const setContestActive = async (req, res) => {
     const updated = await Contest.findByIdAndUpdate(
       id,
       { isActive },
+      { new: true }
+    )
+      .populate('createdBy', '_id firstname emailid')
+      .populate('problems', '_id title difficulty');
+
+    if (!updated) return res.status(404).send('Contest not found');
+    return res.status(200).json(formatContest(updated));
+  } catch (error) {
+    return res.status(500).send('Error ' + error.message);
+  }
+};
+
+const setContestVisibility = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isVisible } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send('Invalid contest ID');
+    }
+    if (typeof isVisible !== 'boolean') {
+      return res.status(400).send('isVisible must be boolean');
+    }
+
+    const updated = await Contest.findByIdAndUpdate(
+      id,
+      { isVisible },
       { new: true }
     )
       .populate('createdBy', '_id firstname emailid')
@@ -491,7 +534,7 @@ const getContestLeaderboard = async (req, res) => {
       const key = String(sub.userId?._id || sub.userId);
       if (!key) continue;
       const participant = participantMap.get(key);
-      if (!participant || participant.isDisqualified || participant.hasExited) continue;
+      if (!participant) continue;
 
       if (!userMap.has(key)) {
         userMap.set(key, {
@@ -503,6 +546,8 @@ const getContestLeaderboard = async (req, res) => {
           lastAcceptedAt: null,
           totalRuntime: 0,
           firstSubmissionAt: sub.createdAt,
+          hasExited: Boolean(participant.hasExited),
+          isDisqualified: Boolean(participant.isDisqualified),
         });
       }
 
@@ -546,6 +591,8 @@ const getContestLeaderboard = async (req, res) => {
       rank: index + 1,
       ...row,
       violations: participantMap.get(String(row.userId))?.violations || 0,
+      hasExited: participantMap.get(String(row.userId))?.hasExited || false,
+      isDisqualified: participantMap.get(String(row.userId))?.isDisqualified || false,
     }));
 
     return res.status(200).json({
@@ -624,12 +671,59 @@ const adminUpdateParticipantViolations = async (req, res) => {
   }
 };
 
+const adminUpdateParticipantStatus = async (req, res) => {
+  try {
+    const { id, userId } = req.params;
+    const { hasExited, isDisqualified } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).send('Invalid contest or user ID');
+    }
+
+    const participant = await ContestParticipant.findOne({
+      contestId: id,
+      userId,
+    });
+    if (!participant) return res.status(404).send('Participant not found in this contest');
+
+    if (typeof hasExited === 'boolean') {
+      participant.hasExited = hasExited;
+      participant.exitedAt = hasExited ? new Date() : null;
+    }
+
+    if (typeof isDisqualified === 'boolean') {
+      participant.isDisqualified = isDisqualified;
+      participant.disqualifiedAt = isDisqualified ? new Date() : null;
+    }
+
+    if (!participant.isDisqualified && participant.violations < 3) {
+      participant.disqualifiedAt = null;
+    }
+
+    await participant.save();
+
+    const populated = await ContestParticipant.findById(participant._id).populate(
+      'userId',
+      '_id firstname emailid role'
+    );
+
+    return res.status(200).json({
+      message: 'Participant status updated',
+      participant: populated,
+    });
+  } catch (error) {
+    return res.status(500).send('Error ' + error.message);
+  }
+};
+
 module.exports = {
   listContests,
+  listContestsForAdmin,
   getContestById,
   createContest,
   updateContest,
   setContestActive,
+  setContestVisibility,
   enterContest,
   exitContest,
   getMyContestParticipation,
@@ -639,4 +733,5 @@ module.exports = {
   getContestLeaderboard,
   getContestParticipantsForAdmin,
   adminUpdateParticipantViolations,
+  adminUpdateParticipantStatus,
 };

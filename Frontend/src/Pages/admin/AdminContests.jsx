@@ -8,6 +8,7 @@ const emptyForm = {
   startTime: "",
   endTime: "",
   isActive: false,
+  isVisible: true,
   problems: [],
 };
 
@@ -38,7 +39,7 @@ export default function AdminContests() {
     setError("");
     try {
       const [contestRes, problemsRes] = await Promise.all([
-        contestApi.list(),
+        contestApi.adminList(),
         getProblems(1, 200),
       ]);
       setContests(contestRes.data || []);
@@ -77,6 +78,7 @@ export default function AdminContests() {
       startTime: toLocalInput(contest.startTime),
       endTime: toLocalInput(contest.endTime),
       isActive: Boolean(contest.isActive),
+      isVisible: contest.isVisible !== false,
       problems: ids,
     });
   };
@@ -101,6 +103,7 @@ export default function AdminContests() {
         startTime: new Date(form.startTime).toISOString(),
         endTime: new Date(form.endTime).toISOString(),
         isActive: form.isActive,
+        isVisible: form.isVisible,
         problems: form.problems,
       };
       if (editId) {
@@ -218,6 +221,14 @@ export default function AdminContests() {
             />
             Active
           </label>
+          <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.isVisible}
+              onChange={(e) => setForm((p) => ({ ...p, isVisible: e.target.checked }))}
+            />
+            Visible To Users
+          </label>
           <input
             type="datetime-local"
             value={form.startTime}
@@ -299,7 +310,7 @@ export default function AdminContests() {
                       {new Date(c.startTime).toLocaleString()} - {new Date(c.endTime).toLocaleString()}
                     </div>
                     <div className="text-xs text-slate-500">
-                      Problems: {c.problems?.length || 0} | Status: {c.status}
+                      Problems: {c.problems?.length || 0} | Status: {c.status} | Visibility: {c.isVisible === false ? "Hidden" : "Visible"}
                     </div>
                   </div>
 
@@ -317,6 +328,22 @@ export default function AdminContests() {
                       className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
                     >
                       {c.isActive ? "Set Inactive" : "Set Active"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await contestApi.setVisibility(c._id, !(c.isVisible !== false));
+                          setContests((prev) =>
+                            prev.map((x) => (x._id === c._id ? res.data : x))
+                          );
+                        } catch (e) {
+                          setError(e?.response?.data || "Failed to update visibility");
+                        }
+                      }}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                    >
+                      {c.isVisible === false ? "Show To Users" : "Hide From Users"}
                     </button>
                     <button
                       type="button"

@@ -239,6 +239,8 @@ export default function ContestDetailPage() {
                       <th className="py-2">#</th>
                       <th className="py-2">User</th>
                       <th className="py-2">Solved</th>
+                      <th className="py-2">Attempted</th>
+                      <th className="py-2">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -247,6 +249,22 @@ export default function ContestDetailPage() {
                         <td className="py-2 text-slate-200">{row.rank}</td>
                         <td className="py-2 pr-2 text-slate-200">{row.name}</td>
                         <td className="py-2 text-emerald-300">{row.solved}</td>
+                        <td className="py-2 text-slate-200">{row.attempted ?? 0}</td>
+                        <td className="py-2">
+                          {row.isDisqualified ? (
+                            <span className="rounded-full border border-red-300/30 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">
+                              Disqualified
+                            </span>
+                          ) : row.hasExited ? (
+                            <span className="rounded-full border border-amber-300/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                              Exited
+                            </span>
+                          ) : (
+                            <span className="rounded-full border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200">
+                              Active
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

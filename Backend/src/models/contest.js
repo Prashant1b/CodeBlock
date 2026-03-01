@@ -19,6 +19,10 @@ const contestSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isVisible: {
+      type: Boolean,
+      default: true,
+    },
     startTime: {
       type: Date,
       required: true,
