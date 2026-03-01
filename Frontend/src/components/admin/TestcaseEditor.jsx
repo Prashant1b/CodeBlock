@@ -86,7 +86,6 @@ export default function TestcaseEditor({ title, value = [], onChange }) {
                   />
                 </div>
 
-                {/* ✅ Explanation box ONLY for Visible Testcases */}
                 {isVisible && (
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Explanation</label>

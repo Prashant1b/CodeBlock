@@ -20,6 +20,12 @@ const userschema=new mongoose.Schema({
         lowercase:true,
         immutable:true
      },
+     phoneNumber: {
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true,
+     },
      age:{
         type:Number,
         min:6,

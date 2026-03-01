@@ -9,9 +9,13 @@
   const problemrouter = require('./route/problemsetter');
   const cors = require("cors");
   const submitrouter=require('./route/Submit');
+  const discussionrouter=require('./route/discussion');
+  const contestrouter=require('./route/contest');
+  const ContestSubmission=require('./models/contestSubmission');
+  const ContestParticipant=require('./models/contestParticipant');
   app.use(
   cors({
-    origin: ["https://codeblock-frontend.onrender.com"],
+    origin: ["http://localhost:5173"],
     credentials: true,
   })
 );
@@ -22,10 +26,16 @@
   app.use("/user",router);
   app.use("/leetcode",problemrouter);
   app.use("/problem",submitrouter);
+  app.use("/discussion",discussionrouter);
+  app.use('/contest',contestrouter);
 
   const Initaliseconnection=async()=>{
       try{
           await Promise.all([main(),redisClient.connect()]);
+          await Promise.all([
+            ContestSubmission.syncIndexes(),
+            ContestParticipant.syncIndexes(),
+          ]);
           console.log("DB connected")
                   app.listen(process.env.PORT, () => {
                   console.log("Server is listen on the port: " + process.env.PORT)

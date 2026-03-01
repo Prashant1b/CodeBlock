@@ -41,6 +41,22 @@ const refreshProfile = useCallback(async () => {
     return res.data;
   };
 
+  const sendSignupOtp = async (emailid) => {
+    const res = await authApi.sendOtp({ emailid, purpose: "signup" });
+    return res.data;
+  };
+
+  const signupWithOtp = async (firstname, emailid, password, otp) => {
+    const res = await authApi.signupWithOtp({
+      firstname,
+      emailid,
+      password,
+      otp,
+    });
+    setUser(res.data?.user ?? null);
+    return res.data;
+  };
+
  const logout = async () => {
   await authApi.logout();
   localStorage.removeItem("user_cache"); 
@@ -58,6 +74,8 @@ const refreshProfile = useCallback(async () => {
       booting,
       login,
       signup,
+      sendSignupOtp,
+      signupWithOtp,
       logout,
       refreshProfile,
       updatePassword,

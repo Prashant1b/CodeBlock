@@ -70,6 +70,12 @@ export default function LoginPage() {
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
+
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-xs text-amber-300 hover:underline">
+              Forgot password via SMS?
+            </Link>
+          </div>
         </form>
 
         <div className="mt-5 text-sm text-slate-300/80">

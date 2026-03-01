@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import AdminTopbar from "./AdminTopbar";
-import { LayoutDashboard, FileText } from "lucide-react";
+import { LayoutDashboard, FileText, Trophy } from "lucide-react";
 
 const linkBase =
   "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition";
@@ -40,6 +40,16 @@ export default function AdminLayout({ userName}) {
             >
               <FileText className="h-4 w-4" />
               Problem Management
+            </NavLink>
+
+            <NavLink
+              to="/admin/contests"
+              className={({ isActive }) =>
+                `${linkBase} ${isActive ? linkActive : linkInactive}`
+              }
+            >
+              <Trophy className="h-4 w-4" />
+              Contest Management
             </NavLink>
           </nav>
 

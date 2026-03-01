@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, PlusCircle , Users} from "lucide-react";
+import { FileText, PlusCircle, Users, Trophy } from "lucide-react";
 import CardAction from "../../components/admin/CardAction";
 
 export default function AdminDashboard() {
@@ -52,6 +52,14 @@ export default function AdminDashboard() {
           colorClass="bg-gradient-to-r from-purple-500 to-pink-500"
           toText="Create"
           onClick={() => navigate("/admin/problems/new")}
+        />
+        <CardAction
+          icon={Trophy}
+          title="Contest Management"
+          desc="Create contests and assign problems for live rankings."
+          colorClass="bg-gradient-to-r from-amber-500 to-orange-500"
+          toText="Open"
+          onClick={() => navigate("/admin/contests")}
         />
       </div>
     </div>

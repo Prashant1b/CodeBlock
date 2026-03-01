@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import useAuth from "../auth/useAuth";
 import {Link} from "react-router-dom"
 import { userApi } from "../api/user.api";
+import toast from "react-hot-toast";
 
 export default function Profile() {
   const { user, refreshProfile } = useAuth();
@@ -87,13 +88,15 @@ useEffect(() => {
   const recentSolved = useMemo(() => solved.slice(0, 6), [solved]);
 
   const onDelete = async () => {
-    if (!confirm("Delete account permanently?")) return;
     setLoading(true);
     setErr("");
+    const toastId = toast.loading("Deleting account...");
     try {
       await userApi.deleteAccount();
       await refreshProfile();
+      toast.success("Account deleted", { id: toastId });
     } catch (e) {
+      toast.error("Failed to delete account", { id: toastId });
       setErr("Failed to delete account");
     } finally {
       setLoading(false);

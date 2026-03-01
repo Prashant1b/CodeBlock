@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { adminProblemsApi } from "../../api/adminProblems.api";
 import Pagination from "../../components/admin/Pagination";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function ProblemsList() {
   const navigate = useNavigate();
@@ -52,12 +53,13 @@ useEffect(() => {
 }, []);
 
   const onDelete = async (id) => {
-    if (!confirm("Delete this problem?")) return;
+    const toastId = toast.loading("Deleting problem...");
     try {
       await adminProblemsApi.remove(id);
+      toast.success("Problem deleted", { id: toastId });
       fetchList(data.page);
     } catch (e) {
-      alert(e?.response?.data || e.message || "Delete failed");
+      toast.error(String(e?.response?.data || e.message || "Delete failed"), { id: toastId });
     }
   };
 
