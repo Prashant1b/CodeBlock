@@ -15,7 +15,7 @@
   const ContestParticipant=require('./models/contestParticipant');
   app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["https://codeblock-frontend.onrender.com"],
     credentials: true,
   })
 );
