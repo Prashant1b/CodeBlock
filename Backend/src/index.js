@@ -15,7 +15,7 @@
   const ContestParticipant=require('./models/contestParticipant');
   app.use(
   cors({
-    origin: ["https://codesblock.vercel.app/"],
+    origin: ["https://codesblock.vercel.app"],
     credentials: true,
   })
 );
