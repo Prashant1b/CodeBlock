@@ -212,6 +212,27 @@ const setContestVisibility = async (req, res) => {
   }
 };
 
+const deleteContest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send('Invalid contest ID');
+    }
+
+    const contest = await Contest.findByIdAndDelete(id);
+    if (!contest) return res.status(404).send('Contest not found');
+
+    await Promise.all([
+      ContestParticipant.deleteMany({ contestId: id }),
+      ContestSubmission.deleteMany({ contestId: id }),
+    ]);
+
+    return res.status(200).json({ message: 'Contest deleted successfully' });
+  } catch (error) {
+    return res.status(500).send('Error ' + error.message);
+  }
+};
+
 const submitContestProblem = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -724,6 +745,7 @@ module.exports = {
   updateContest,
   setContestActive,
   setContestVisibility,
+  deleteContest,
   enterContest,
   exitContest,
   getMyContestParticipation,

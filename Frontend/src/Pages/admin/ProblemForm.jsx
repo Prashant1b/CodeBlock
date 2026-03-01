@@ -9,18 +9,16 @@ const empty = {
   title: "",
   description: "",
   difficulty: "Easy",
+  isVisible: true,
   tags: [],
-
   visibletestcases: [],
   hiddentestcases: [],
-
   startcode: [
     { language: "cpp", code: "" },
     { language: "java", code: "" },
     { language: "python", code: "" },
     { language: "javascript", code: "" },
   ],
-
   refsolution: [
     { language: "cpp", solution: "" },
     { language: "java", solution: "" },
@@ -28,6 +26,8 @@ const empty = {
     { language: "javascript", solution: "" },
   ],
 };
+
+const panel = "rounded-3xl border border-white/10 bg-white/[0.03] shadow-[0_20px_70px_rgba(0,0,0,.32)]";
 
 const stripWrappingQuotes = (s) => {
   const t = String(s ?? "").trim();
@@ -39,21 +39,19 @@ const stripWrappingQuotes = (s) => {
 
 const normalizeMultiline = (s) =>
   stripWrappingQuotes(String(s ?? "")).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
 const normalizeLang = (lang) => {
   const s = String(lang ?? "").trim().toLowerCase();
   if (!s) return s;
-
-  if (s === "c++" || s === "cplusplus" || s === "cpp" || s === "cxx") return "cpp";
-  if (s === "js" || s === "node" || s === "nodejs" || s === "javascript") return "javascript";
-  if (s === "py" || s === "python3" || s === "python") return "python";
+  if (["c++", "cplusplus", "cpp", "cxx"].includes(s)) return "cpp";
+  if (["js", "node", "nodejs", "javascript"].includes(s)) return "javascript";
+  if (["py", "python3", "python"].includes(s)) return "python";
   if (s === "java") return "java";
-
- 
   return s;
 };
 
 const tagsStringToArray = (tagsStr) => {
-  if (Array.isArray(tagsStr)) return tagsStr; 
+  if (Array.isArray(tagsStr)) return tagsStr;
   return String(tagsStr ?? "")
     .split(",")
     .map((x) => x.trim())
@@ -68,14 +66,14 @@ const tagsArrayToString = (tagsArr) => {
 const fromDbToForm = (p) => {
   const startcodeUi = Array.isArray(p?.startcode)
     ? p.startcode.map((s) => ({
-        language: normalizeLang(s?.language || ""), // ✅ normalize
+        language: normalizeLang(s?.language || ""),
         code: String(s?.initialcode ?? ""),
       }))
     : [];
 
   const refsolutionUi = Array.isArray(p?.refsolution)
     ? p.refsolution.map((r) => ({
-        language: normalizeLang(r?.language || ""), // ✅ normalize
+        language: normalizeLang(r?.language || ""),
         solution: String(r?.solution ?? ""),
       }))
     : [];
@@ -84,10 +82,8 @@ const fromDbToForm = (p) => {
     ...empty,
     ...p,
     tags: typeof p?.tags === "string" ? tagsStringToArray(p.tags) : p?.tags || [],
-
     startcode: startcodeUi.length ? startcodeUi : empty.startcode,
     refsolution: refsolutionUi.length ? refsolutionUi : empty.refsolution,
-
     visibletestcases: p?.visibletestcases || [],
     hiddentestcases: p?.hiddentestcases || [],
   };
@@ -106,12 +102,12 @@ const toDbPayload = (form) => {
   }));
 
   const startcode = (form.startcode || []).map((s) => ({
-    language: normalizeLang(s?.language), // ✅ critical
+    language: normalizeLang(s?.language),
     initialcode: String(s?.code ?? ""),
   }));
 
   const refsolution = (form.refsolution || []).map((r) => ({
-    language: normalizeLang(r?.language), // ✅ critical
+    language: normalizeLang(r?.language),
     solution: String(r?.solution ?? ""),
   }));
 
@@ -119,9 +115,8 @@ const toDbPayload = (form) => {
     title: String(form.title ?? ""),
     description: String(form.description ?? ""),
     difficulty: String(form.difficulty ?? "Easy"),
-
+    isVisible: form.isVisible !== false,
     tags: tagsArrayToString(form.tags),
-
     visibletestcases,
     hiddentestcases,
     startcode,
@@ -148,10 +143,9 @@ export default function ProblemForm() {
       setErr("");
       try {
         const res = await adminProblemsApi.getById(id);
-        const p = res.data;
-        setForm(fromDbToForm(p));
+        setForm(fromDbToForm(res.data));
       } catch (e) {
-        setErr(e?.response?.data || e.message || "Failed to load problem");
+        setErr(String(e?.response?.data || e.message || "Failed to load problem"));
       } finally {
         setLoading(false);
       }
@@ -166,11 +160,11 @@ export default function ProblemForm() {
     if (!form.refsolution?.length) return "Add at least 1 reference solution";
     if (!form.visibletestcases?.length) return "Add at least 1 visible testcase";
 
-    // visible tcs basic validation
     for (const tc of form.visibletestcases || []) {
       if (!String(tc?.input ?? "").trim()) return "Visible testcase input is required";
       if (!String(tc?.output ?? "").trim()) return "Visible testcase output is required";
     }
+
     const okLang = new Set(["cpp", "java", "python", "javascript"]);
     for (const r of form.refsolution || []) {
       const l = normalizeLang(r?.language);
@@ -192,7 +186,6 @@ export default function ProblemForm() {
     setErr("");
     try {
       const payload = toDbPayload(form);
-
       if (isEdit) {
         await adminProblemsApi.update(id, payload);
       } else {
@@ -200,76 +193,73 @@ export default function ProblemForm() {
       }
       navigate("/admin/problems");
     } catch (e) {
-      setErr(e?.response?.data || e.message || "Save failed");
+      setErr(String(e?.response?.data || e.message || "Save failed"));
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white/20 p-6 shadow-sm">
-        Loading...
-      </div>
-    );
+    return <div className={`${panel} p-6 text-slate-300`}>Loading...</div>;
   }
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-extrabold text-slate-900">{heading}</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            {isEdit ? "Update problem details & testcases." : "Add a new problem to your platform."}
-          </p>
-        </div>
+      <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0f1a2e]/85 via-[#0f1728]/80 to-[#0b1120]/85 p-6 shadow-[0_26px_90px_rgba(0,0,0,.45)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white">{heading}</h2>
+            <p className="mt-1 text-sm text-slate-300">
+              {isEdit ? "Update details and testcase logic." : "Create a high-quality problem for your platform."}
+            </p>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-slate-800 disabled:opacity-60"
-            type="button"
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-200"
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 disabled:opacity-60"
+              type="button"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {err && (
-        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">
-          {String(err)}
+        <div className="mt-4 rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm font-semibold text-red-200">
+          {err}
         </div>
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        {/* Left */}
         <div className="space-y-5">
-          <section className="rounded-3xl border border-slate-200 bg-white/20 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <section className={`${panel} p-5`}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="text-sm font-semibold text-slate-700">Title</label>
+                <label className="text-sm font-semibold text-slate-300">Title</label>
                 <input
                   value={form.title}
                   onChange={(e) => setField("title", e.target.value)}
                   placeholder="e.g. Two Sum"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-[#0f1b2f] px-4 py-3 text-sm text-slate-100 outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-700">Difficulty</label>
+                <label className="text-sm font-semibold text-slate-300">Difficulty</label>
                 <select
                   value={form.difficulty}
                   onChange={(e) => setField("difficulty", e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-[#0f1b2f] px-4 py-3 text-sm text-slate-100 outline-none"
                 >
                   <option>Easy</option>
                   <option>Medium</option>
@@ -277,20 +267,29 @@ export default function ProblemForm() {
                 </select>
               </div>
 
-              <div className="md:col-span-2">
-                <TagInput value={form.tags} onChange={(v) => setField("tags", v)} />
-                <p className="mt-1 text-xs text-slate-500">
-                  (Saved to DB as comma-separated string because your schema uses tags: String)
-                </p>
+              <div className="flex items-end">
+                <label className="flex w-full items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1b2f] px-4 py-3 text-sm text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={form.isVisible !== false}
+                    onChange={(e) => setField("isVisible", e.target.checked)}
+                  />
+                  Show in user problem section
+                </label>
               </div>
 
               <div className="md:col-span-2">
-                <label className="text-sm font-semibold text-slate-700">Description</label>
+                <TagInput value={form.tags} onChange={(v) => setField("tags", v)} />
+                <p className="mt-1 text-xs text-slate-500">Stored as comma-separated tags in backend schema.</p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-sm font-semibold text-slate-300">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setField("description", e.target.value)}
                   placeholder="Write full problem statement..."
-                  className="mt-2 min-h-[220px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="mt-2 min-h-[220px] w-full rounded-2xl border border-white/10 bg-[#0f1b2f] px-4 py-3 text-sm text-slate-100 outline-none"
                 />
               </div>
             </div>
@@ -310,14 +309,12 @@ export default function ProblemForm() {
         </div>
 
         <div className="space-y-5">
-          <section className="rounded-3xl border border-slate-200 bg-white/20 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-            <div className="text-sm font-bold text-slate-800">Start Code (Optional)</div>
+          <section className={`${panel} p-5`}>
+            <div className="text-sm font-bold text-slate-200">Start Code (Optional)</div>
             <div className="mt-4 space-y-3">
               {(form.startcode || []).map((s, idx) => (
-                <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3">
-                  <div className="text-xs font-bold text-slate-500">
-                    {String(s.language).toUpperCase()}
-                  </div>
+                <div key={idx} className="rounded-2xl border border-white/10 bg-[#0b1628] p-3">
+                  <div className="text-xs font-bold text-slate-400">{String(s.language).toUpperCase()}</div>
                   <textarea
                     value={s.code}
                     onChange={(e) => {
@@ -326,7 +323,7 @@ export default function ProblemForm() {
                       );
                       setField("startcode", next);
                     }}
-                    className="mt-2 min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                    className="mt-2 min-h-[140px] w-full rounded-2xl border border-white/10 bg-[#0f1b2f] px-3 py-2 font-mono text-sm text-slate-100 outline-none"
                     placeholder="// starter template"
                   />
                 </div>

@@ -141,7 +141,7 @@ export default function ProblemTablePro() {
             
       {solvedLoaded && solvedSet.size === 0 && (
         <div className="mt-3 text-xs text-slate-500">
-          Solved/Unsolved will work only after login (since solved data is user-based).
+          Solved/Unsolved will work only after login.
         </div>
       )}
 

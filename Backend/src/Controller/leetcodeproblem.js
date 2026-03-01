@@ -40,6 +40,7 @@ const createproblem = async (req, res) => {
     }
     const userproblem = await Problem.create({
       ...req.body,
+      isVisible: req.body?.isVisible === undefined ? true : Boolean(req.body.isVisible),
       problemcreator: req.user._id
     });
 
@@ -105,8 +106,11 @@ const getproblemById = async (req, res) => {
       return res.status(400).send("Invalid Problem ID");
     }
     const id = req.params.id;
-    const problem = await Problem.findById(id).select('_id title description difficulty tags visibletestcases startcode  refsolution');
+    const problem = await Problem.findById(id).select('_id title description difficulty tags isVisible visibletestcases startcode  refsolution');
     if (!problem) throw new Error("Problem doesn't exists");
+    if (problem.isVisible === false && req.user?.role !== "admin") {
+      return res.status(404).send("Problem doesn't exists");
+    }
     res.status(200).send(problem);
   } catch (error) {
     res.status(404).send("Error " + error.message);
@@ -118,8 +122,9 @@ const getallproblem = async (req, res) => {
     const page = parseInt(req.query.page) || 1; // Current page
     const limit = parseInt(req.query.limit) || 10; // Items per page
     const skip = (page - 1) * limit; // How many items to skip
-    const total = await Problem.countDocuments();
-    const problems = await Problem.find().select('_id title difficulty tags ').skip(skip).limit(limit);
+    const visibilityQuery = { isVisible: { $ne: false } };
+    const total = await Problem.countDocuments(visibilityQuery);
+    const problems = await Problem.find(visibilityQuery).select('_id title difficulty tags isVisible').skip(skip).limit(limit);
     if (problems.length === 0) throw new Error("Problems are missing");
     res.status(200).json({
       page,
@@ -130,6 +135,30 @@ const getallproblem = async (req, res) => {
     });
   } catch (error) {
     res.status(404).send("Error: " + error.message);
+  }
+};
+
+const getallproblemAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Problem.countDocuments();
+    const problems = await Problem.find()
+      .select('_id title difficulty tags isVisible')
+      .skip(skip)
+      .limit(limit);
+
+    return res.status(200).json({
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      totalProblems: total,
+      problems
+    });
+  } catch (error) {
+    return res.status(500).send("Error: " + error.message);
   }
 };
 
@@ -148,6 +177,31 @@ const deleteproblem = async (req, res) => {
     res.status(500).send("Error " + error.message);
   }
 }
+
+const setProblemVisibility = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isVisible } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send("Invalid Problem ID");
+    }
+    if (typeof isVisible !== "boolean") {
+      return res.status(400).send("isVisible must be boolean");
+    }
+
+    const updated = await Problem.findByIdAndUpdate(
+      id,
+      { isVisible },
+      { new: true }
+    ).select("_id title difficulty tags isVisible");
+
+    if (!updated) return res.status(404).send("Problem does not exist");
+    return res.status(200).json(updated);
+  } catch (error) {
+    return res.status(500).send("Error " + error.message);
+  }
+};
 
 const solvedAllproblemByUser = async (req, res) => {
   try {
@@ -221,4 +275,16 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-module.exports = { createproblem, updateproblem, getproblemById, getallproblem, deleteproblem, solvedAllproblemByUser,SubmittedProblem ,allUser,updateUserRole};
+module.exports = {
+  createproblem,
+  updateproblem,
+  getproblemById,
+  getallproblem,
+  getallproblemAdmin,
+  deleteproblem,
+  setProblemVisibility,
+  solvedAllproblemByUser,
+  SubmittedProblem,
+  allUser,
+  updateUserRole
+};

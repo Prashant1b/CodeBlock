@@ -9,6 +9,7 @@ const {
   updateContest,
   setContestActive,
   setContestVisibility,
+  deleteContest,
   enterContest,
   exitContest,
   getMyContestParticipation,
@@ -33,6 +34,7 @@ contestRouter.get('/:id', getContestById);
 
 contestRouter.post('/', adminmiddleware, createContest);
 contestRouter.put('/:id', adminmiddleware, updateContest);
+contestRouter.delete('/:id', adminmiddleware, deleteContest);
 contestRouter.patch('/:id/active', adminmiddleware, setContestActive);
 contestRouter.patch('/:id/visibility', adminmiddleware, setContestVisibility);
 contestRouter.patch(

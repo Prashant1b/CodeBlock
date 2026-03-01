@@ -15,6 +15,10 @@ const problemschema=new mongoose.Schema({
         enum:["Easy","Medium","Hard"],
         required:true
     },
+    isVisible: {
+        type: Boolean,
+        default: true
+    },
     tags:{
         type:String,
          required:true,

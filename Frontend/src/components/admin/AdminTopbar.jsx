@@ -1,27 +1,25 @@
 import React from "react";
-import {  ShieldCheck } from "lucide-react";
+import { ShieldCheck, Sparkles } from "lucide-react";
 
-export default function AdminTopbar({ userName = "Admin"}) {
+export default function AdminTopbar({ userName = "Admin" }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/20 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-40 border-b border-cyan-100/10 bg-[#08101f]/85 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1280px] items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
+          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 to-emerald-400 text-slate-900 shadow-[0_12px_30px_rgba(16,185,129,0.35)]">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-lg font-bold text-slate-900">Admin Panel</div>
-            <div className="text-xs text-slate-500">Problem Master Control</div>
+            <div className="text-base font-bold tracking-wide text-slate-100">CodeBlock Admin</div>
+            <div className="text-[11px] text-slate-400">Operations Console</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+          <Sparkles className="h-4 w-4 text-cyan-300" />
           <div className="text-right">
-            <div className="text-sm font-semibold text-slate-900">{userName}</div>
-            <div className="flex items-center justify-end gap-2 text-xs text-emerald-600">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Active
-            </div>
+            <div className="text-xs font-semibold text-slate-100">{userName}</div>
+            <div className="text-[11px] text-emerald-300">Session active</div>
           </div>
         </div>
       </div>
