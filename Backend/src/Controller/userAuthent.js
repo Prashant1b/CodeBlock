@@ -59,27 +59,21 @@ const getGoogleClient = () => {
   }
 };
 
-const getNodemailer = () => {
-  try {
-    return require('nodemailer');
-  } catch {
-    throw new Error('nodemailer package is missing. Run: npm install nodemailer');
-  }
-};
-
 const sendOtpEmail = async (emailid, otp, purpose) => {
   const BREVO_API_KEY = cleanEnv(process.env.BREVO_API_KEY);
-  const SMTP_USER = cleanEnv(process.env.EMAIL_USER);
-  const SMTP_PASS = cleanEnv(process.env.EMAIL_PASSWORD);
-  const SMTP_HOST = cleanEnv(process.env.SMTP_HOST) || 'smtp-relay.brevo.com';
-  const SMTP_PORT = Number(cleanEnv(process.env.SMTP_PORT) || 587);
   const senderFromEnv = parseSenderFromEnv();
-  const FROM_EMAIL = senderFromEnv?.email || SMTP_USER;
+  const FROM_EMAIL = senderFromEnv?.email;
   const FROM_NAME = senderFromEnv?.name || process.env.SMTP_FROM_NAME || 'CodeBlock';
 
-  if (!FROM_EMAIL || (!BREVO_API_KEY && (!SMTP_USER || !SMTP_PASS))) {
+  if (!BREVO_API_KEY) {
+    throw new Error('BREVO_API_KEY is missing in env');
+  }
+  if (!BREVO_API_KEY.startsWith('xkeysib-')) {
+    throw new Error('Invalid BREVO_API_KEY format. It should start with xkeysib-');
+  }
+  if (!FROM_EMAIL) {
     throw new Error(
-      'Brevo config missing. Set BREVO_API_KEY or EMAIL_USER + EMAIL_PASSWORD in env'
+      'SMTP_FROM is missing or invalid. Set: SMTP_FROM="CodeBlock <verified-sender@domain.com>"'
     );
   }
 
@@ -94,39 +88,22 @@ const sendOtpEmail = async (emailid, otp, purpose) => {
     </div>
   `;
 
-  if (BREVO_API_KEY && BREVO_API_KEY.startsWith('xkeysib-')) {
-    await axios.post(
-      'https://api.brevo.com/v3/smtp/email',
-      {
-        sender: { email: FROM_EMAIL, name: FROM_NAME },
-        to: [{ email: emailid }],
-        subject,
-        htmlContent: html,
-      },
-      {
-        headers: {
-          'api-key': BREVO_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        timeout: 15000,
-      }
-    );
-  } else {
-    const nodemailer = getNodemailer();
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-
-    await transporter.sendMail({
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: emailid,
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: { email: FROM_EMAIL, name: FROM_NAME },
+      to: [{ email: emailid }],
       subject,
-      html,
-    });
-  }
+      htmlContent: html,
+    },
+    {
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      timeout: 15000,
+    }
+  );
 
   // no-op return to make it explicit this function completes only on success
   return true;
