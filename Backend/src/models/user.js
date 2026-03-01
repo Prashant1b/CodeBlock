@@ -41,7 +41,7 @@ const userschema=new mongoose.Schema({
          type:mongoose.Schema.Types.ObjectId,
          ref:"problem"
         }],
-        unique:true
+        default:[]
 
      },
      password:{
