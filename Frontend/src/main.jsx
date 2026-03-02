@@ -1,17 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-<<<<<<< HEAD
 import { BrowserRouter } from 'react-router-dom'
-=======
-import { HashRouter } from 'react-router'
->>>>>>> ebea953bed1a46a9ab29c187ddcc58b1016a6623
 import { AuthProvider } from "./auth/AuthProvider";
 import { Toaster } from 'react-hot-toast';
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <HashRouter>
+  <BrowserRouter>
   <StrictMode>
      <AuthProvider>
         <App />
@@ -27,5 +23,5 @@ createRoot(document.getElementById('root')).render(
         />
       </AuthProvider>
   </StrictMode>
-  </HashRouter>,
+  </BrowserRouter>,
 )
