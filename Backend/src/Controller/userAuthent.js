@@ -4,12 +4,10 @@ const Submission = require('../models/submissionschema');
 const bcrypt = require('bcrypt');
 const validate = require('../utils/validator');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const axios = require('axios');
 const redisClient = require('../config/redis');
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
-const SMS_OTP_EXPIRY_MS = 5 * 60 * 1000;
 
 const parseSenderFromEnv = () => {
   const rawFrom = String(process.env.SMTP_FROM || '').trim();
@@ -27,7 +25,6 @@ const parseSenderFromEnv = () => {
 };
 
 const cleanEnv = (value) => String(value || '').trim().replace(/^"|"$/g, '');
-const normalizePhone = (value) => String(value || '').replace(/[^\d+]/g, '').trim();
 
 const issueAuth = (res, user) => {
   const token = jwt.sign(
@@ -42,21 +39,6 @@ const issueAuth = (res, user) => {
     secure: true,
     maxAge: 60 * 60 * 1000,
   });
-};
-
-const getGoogleClient = () => {
-  try {
-    const { OAuth2Client } = require('google-auth-library');
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      throw new Error('GOOGLE_CLIENT_ID is missing in env');
-    }
-    return new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  } catch (error) {
-    if (String(error.message || '').includes('GOOGLE_CLIENT_ID')) throw error;
-    throw new Error(
-      'google-auth-library package is missing. Run: npm install google-auth-library'
-    );
-  }
 };
 
 const sendOtpEmail = async (emailid, otp, purpose) => {
@@ -109,40 +91,6 @@ const sendOtpEmail = async (emailid, otp, purpose) => {
   return true;
 };
 
-const sendOtpSms = async (phoneNumber, otp, purpose) => {
-  const ACCOUNT_SID = cleanEnv(process.env.TWILIO_ACCOUNT_SID);
-  const AUTH_TOKEN = cleanEnv(process.env.TWILIO_AUTH_TOKEN);
-  const FROM_NUMBER = cleanEnv(process.env.TWILIO_FROM_NUMBER);
-  const debugMode = cleanEnv(process.env.SMS_DEBUG_MODE) === 'true';
-
-  if (debugMode) {
-    console.log(`[SMS_DEBUG_MODE] OTP ${otp} for ${purpose} to ${phoneNumber}`);
-    return true;
-  }
-
-  if (!ACCOUNT_SID || !AUTH_TOKEN || !FROM_NUMBER) {
-    throw new Error('SMS config missing. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER');
-  }
-
-  const body = new URLSearchParams({
-    To: phoneNumber,
-    From: FROM_NUMBER,
-    Body: `Your OTP for ${purpose} is ${otp}. Valid for 5 minutes.`,
-  });
-
-  await axios.post(
-    `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json`,
-    body.toString(),
-    {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      auth: { username: ACCOUNT_SID, password: AUTH_TOKEN },
-      timeout: 15000,
-    }
-  );
-
-  return true;
-};
-
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const verifyOtpFromDb = async (emailid, purpose, otp, consume = true) => {
@@ -178,23 +126,16 @@ const register = async (req, res) => {
     validate(req.body);
 
     const { firstname, emailid, password } = req.body;
-    const phoneNumber = normalizePhone(req.body?.phoneNumber);
 
     const emailexist = await User.exists({ emailid });
     if (emailexist) {
       return res.status(409).json({ message: 'Email already exists. Please login.' });
     }
-    if (phoneNumber) {
-      const phoneExists = await User.exists({ phoneNumber });
-      if (phoneExists) return res.status(409).json({ message: 'Phone number already exists' });
-    }
-
     const hashed = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       firstname,
       emailid,
-      phoneNumber: phoneNumber || undefined,
       password: hashed,
       role: 'user',
     });
@@ -215,25 +156,18 @@ const registerWithOtp = async (req, res) => {
 
     const { firstname, emailid, password, otp } = req.body;
     if (!otp) return res.status(400).json({ message: 'OTP is required' });
-    const phoneNumber = normalizePhone(req.body?.phoneNumber);
 
     const email = String(emailid || '').trim().toLowerCase();
     const emailexist = await User.exists({ emailid: email });
     if (emailexist) {
       return res.status(409).json({ message: 'Email already exists. Please login.' });
     }
-    if (phoneNumber) {
-      const phoneExists = await User.exists({ phoneNumber });
-      if (phoneExists) return res.status(409).json({ message: 'Phone number already exists' });
-    }
-
     await verifyOtpFromDb(email, 'signup', otp, true);
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       firstname,
       emailid: email,
-      phoneNumber: phoneNumber || undefined,
       password: hashed,
       role: 'user',
     });
@@ -375,46 +309,6 @@ const loginWithOtp = async (req, res) => {
   }
 };
 
-const googleLogin = async (req, res) => {
-  try {
-    const { credential } = req.body;
-    if (!credential) {
-      return res.status(400).json({ message: 'Google credential is required' });
-    }
-
-    const client = getGoogleClient();
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const emailid = String(payload?.email || '').toLowerCase();
-    const firstname = String(payload?.given_name || payload?.name || 'User');
-
-    if (!emailid) return res.status(400).json({ message: 'Google email missing' });
-
-    let user = await User.findOne({ emailid });
-    if (!user) {
-      const randomPassword = crypto.randomBytes(24).toString('hex');
-      const hashed = await bcrypt.hash(randomPassword, 10);
-      user = await User.create({
-        firstname,
-        emailid,
-        password: hashed,
-        role: 'user',
-      });
-    }
-
-    issueAuth(res, user);
-
-    const safeUser = await User.findById(user._id).select('-password');
-    return res.status(200).json({ message: 'Logged in with Google', user: safeUser });
-  } catch (error) {
-    return res.status(400).json({ message: error.message || 'Google login failed' });
-  }
-};
-
 const logout = async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -480,50 +374,6 @@ const updatepassword = async (req, res) => {
   }
 };
 
-const sendSignupSmsOtp = async (req, res) => {
-  try {
-    const phoneNumber = normalizePhone(req.body?.phoneNumber);
-    if (!phoneNumber) {
-      return res.status(400).json({ message: 'phoneNumber is required' });
-    }
-
-    const user = await User.findOne({ phoneNumber }).select('_id');
-    if (user) {
-      return res.status(409).json({ message: 'Phone number already exists' });
-    }
-
-    const otp = generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
-    const expiresAt = new Date(Date.now() + SMS_OTP_EXPIRY_MS);
-
-    await Otp.findOneAndUpdate(
-      { emailid: phoneNumber, purpose: 'signup_sms' },
-      { emailid: phoneNumber, purpose: 'signup_sms', otpHash, expiresAt, attempts: 0 },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    await sendOtpSms(phoneNumber, otp, 'signup');
-    return res.status(200).json({ message: 'Signup SMS OTP sent', expiresInSeconds: 300 });
-  } catch (error) {
-    return res.status(500).json({ message: error.message || 'Failed to send signup SMS OTP' });
-  }
-};
-
-const verifySignupSmsOtp = async (req, res) => {
-  try {
-    const phoneNumber = normalizePhone(req.body?.phoneNumber);
-    const otp = String(req.body?.otp || '').trim();
-    if (!phoneNumber || !otp) {
-      return res.status(400).json({ message: 'phoneNumber and otp are required' });
-    }
-
-    await verifyOtpFromDb(phoneNumber, 'signup_sms', otp, false);
-    return res.status(200).json({ verified: true, message: 'Signup SMS OTP verified' });
-  } catch (error) {
-    return res.status(400).json({ verified: false, message: error.message || 'Invalid OTP' });
-  }
-};
-
 const resetPasswordWithOtp = async (req, res) => {
   try {
     const email = String(req.body?.emailid || '').trim().toLowerCase();
@@ -559,12 +409,9 @@ module.exports = {
   verifyOtp,
   login,
   loginWithOtp,
-  googleLogin,
   logout,
   getprofile,
   DeleteUserData,
   updatepassword,
   resetPasswordWithOtp,
-  sendSignupSmsOtp,
-  verifySignupSmsOtp,
 };
