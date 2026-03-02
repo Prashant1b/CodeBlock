@@ -13,7 +13,8 @@ const adminmiddleware=async (req,res,next)=>{
             if(payload.role!='admin') throw new Error("Only Admin Can do IT")
             if(!user) throw new Error("User doesn't exists");
             const isblocked=await redisClient.exists(`blocked_${token}`);
-            if(isblocked) throw new Error("Invalid token");
+            const isBlockedLegacy = await redisClient.exists(`token:${token}`);
+            if(isblocked || isBlockedLegacy) throw new Error("Invalid token");
             req.user=user;
             next();
      } 

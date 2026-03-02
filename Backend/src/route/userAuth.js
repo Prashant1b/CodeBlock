@@ -27,7 +27,7 @@ router.post('/otp/verify', verifyOtp);
 router.post('/login', login);
 router.post('/login/otp', loginWithOtp);
 
-router.post('/logout', usermiddleware, logout);
+router.post('/logout', logout);
 router.get('/profile', getprofile);
 router.delete('/profile/delete', usermiddleware, DeleteUserData);
 router.post('/updatepassword', usermiddleware, updatepassword);

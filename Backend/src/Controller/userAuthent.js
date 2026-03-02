@@ -314,10 +314,23 @@ const logout = async (req, res) => {
     const token = req.cookies.token;
     if (token) {
       const payload = jwt.decode(token);
-      await redisClient.set(`token:${token}`, 'blocked');
-      await redisClient.expireAt(`token:${token}`, payload.exp);
+      await Promise.all([
+        redisClient.set(`blocked_${token}`, 'blocked'),
+        redisClient.set(`token:${token}`, 'blocked'),
+      ]);
+      if (payload?.exp) {
+        await Promise.all([
+          redisClient.expireAt(`blocked_${token}`, payload.exp),
+          redisClient.expireAt(`token:${token}`, payload.exp),
+        ]);
+      }
     }
-    res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: false });
+    res.clearCookie('token', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      path: '/',
+    });
     return res.status(200).json({ message: 'Logged out' });
   } catch (err) {
     res.status(503).send('Error ' + err);
@@ -327,14 +340,18 @@ const logout = async (req, res) => {
 const getprofile = async (req, res) => {
   try {
     const token = req.cookies.token;
-    if (!token) throw new Error('Token is missing');
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
     const payload = jwt.verify(token, process.env.key);
     const { _id } = payload;
     const user = await User.findById(_id).select('-password');
-    if (!user) throw new Error("User doesn't exists");
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
     return res.status(200).json({ user });
   } catch (error) {
-    res.status(400).send('Error ' + error);
+    return res.status(401).json({ message: 'Unauthorized' });
   }
 };
 
@@ -365,9 +382,22 @@ const updatepassword = async (req, res) => {
     await req.user.save();
     const token = req.cookies.token;
     const payload = jwt.decode(token);
-    await redisClient.set(`token:${token}`, 'blocked');
-    await redisClient.expireAt(`token:${token}`, payload.exp);
-    res.cookie('token', null, { expires: new Date(Date.now()) });
+    await Promise.all([
+      redisClient.set(`blocked_${token}`, 'blocked'),
+      redisClient.set(`token:${token}`, 'blocked'),
+    ]);
+    if (payload?.exp) {
+      await Promise.all([
+        redisClient.expireAt(`blocked_${token}`, payload.exp),
+        redisClient.expireAt(`token:${token}`, payload.exp),
+      ]);
+    }
+    res.clearCookie('token', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      path: '/',
+    });
     res.status(200).send('Password Update Sucessfully. Login Again');
   } catch (error) {
     res.status(500).send('Error ' + error.message);
