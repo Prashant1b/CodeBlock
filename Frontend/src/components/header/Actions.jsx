@@ -5,8 +5,7 @@ import useAuth from "../../auth/useAuth";
 import UserMenu from "./UserMenu";
 
 export default function Actions({ onMobileSearch, showSearch = true }) {
-  const { user, booting, authStatus } = useAuth(); 
-  // agar authStatus nahi hai tumhare hook me, to use hata dena (neeche alt diya hai)
+  const { user, booting } = useAuth();
 
   return (
     <div className="flex items-center gap-2">
@@ -21,11 +20,11 @@ export default function Actions({ onMobileSearch, showSearch = true }) {
         </button>
       )}
 
-      {/* Loading */}
-      {booting ? (
-        <div className="h-10 w-24 rounded-xl bg-white/10 animate-pulse" />
-      ) : !user && (authStatus ? authStatus === "unauthenticated" : true) ? (
-        // Not logged in
+      {user ? (
+        // Logged in
+        <UserMenu />
+      ) : (
+        // Guest view (show immediately even while backend wakes up)
         <div className="flex items-center gap-2">
           <Link
             to="/signin"
@@ -33,10 +32,16 @@ export default function Actions({ onMobileSearch, showSearch = true }) {
           >
             Sign in
           </Link>
+          <Link
+            to="/signup"
+            className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+          >
+            Sign up
+          </Link>
+          {booting ? (
+            <span className="h-2 w-2 rounded-full bg-amber-300 animate-pulse" title="Checking session" />
+          ) : null}
         </div>
-      ) : (
-        // Logged in
-        <UserMenu />
       )}
     </div>
   );

@@ -13,7 +13,7 @@ const refreshProfile = useCallback(async () => {
     const res = await userApi.profile();
     setUser(res.data?.user ?? null);
   } catch (error) {
-    if (error?.response?.status === 401) {
+    if (error?.response?.status === 401 || error?.response?.status === 400) {
       setUser(null);
     } else {
       console.error("Profile fetch error:", error);
@@ -58,9 +58,14 @@ const refreshProfile = useCallback(async () => {
   };
 
  const logout = async () => {
-  await authApi.logout();
-  localStorage.removeItem("user_cache"); 
-  setUser(null);
+  try {
+    await authApi.logout();
+  } catch {
+    // keep local logout even if network fails
+  } finally {
+    localStorage.removeItem("user_cache");
+    setUser(null);
+  }
 };
 
   const updatePassword = async (data) => {
