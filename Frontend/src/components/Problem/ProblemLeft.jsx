@@ -1,12 +1,13 @@
 import SubmissionsTab from "../../Pages/SubmissionTab";
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import ChatAI from "../ChatAI";
 
-export default function ProblemLeft({ problem }) {
+export default function ProblemLeft({ problem, currentCode = "", currentLanguage = "cpp" }) {
   const { id } = useParams();
   const [tab, setTab] = useState("Description");
 
-  const tabs = ["Description", "Editorial", "Solutions", "Submissions"];
+  const tabs = ["Description", "Editorial", "Solutions", "Submissions", "ChatAI"];
 
   const difficultyPill = useMemo(() => {
     const d = String(problem?.difficulty || "").toLowerCase();
@@ -15,7 +16,6 @@ export default function ProblemLeft({ problem }) {
     if (d === "hard") return "bg-red-500/15 text-red-400 border-red-500/25";
     return "bg-white/10 text-slate-200 border-white/10";
   }, [problem?.difficulty]);
-
   return (
     <div className="h-[72vh] flex flex-col">
       {/* Top Tabs */}
@@ -36,8 +36,6 @@ export default function ProblemLeft({ problem }) {
             </button>
           ))}
         </div>
-
-        {/* Small right area (optional) */}
         <div className="hidden md:flex items-center gap-2 text-xs text-slate-400">
           <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             Problem
@@ -154,7 +152,7 @@ export default function ProblemLeft({ problem }) {
             {/* Notes */}
             <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
               <div className="text-xs text-slate-400">
-                Note: <span className="text-slate-300">Login </span> to view 
+                Note: <span className="text-slate-300">Login </span> to view
                 the description. <span className="text-slate-300">Login</span>{" "}
                 to run or submission.
               </div>
@@ -162,9 +160,48 @@ export default function ProblemLeft({ problem }) {
           </div>
         )}
 
-        {tab !== "Description" && (
+        {tab === "ChatAI" && (
+          <div>
+            <ChatAI problem={problem} currentCode={currentCode} currentLanguage={currentLanguage} />
+          </div>
+        )}
+
+        {tab !== "Description" && tab !== "ChatAI" && (
           <div className="rounded-xl border border-white/10 bg-black/20 p-4">
             <div className="text-sm text-slate-200 font-semibold">{tab}</div>
+
+            {tab === "Editorial" &&
+              <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+                <p className="mt-2 text-sm leading-6 text-slate-300 whitespace-pre-wrap">
+                  {problem?.Editorial || "No Editorial"}
+                </p>
+              </div>}
+
+            {tab === "Solutions" &&
+              <div className="divide-y divide-slate-700 rounded-lg border border-slate-700 overflow-hidden">
+                {problem?.refsolution?.length > 0 ? (
+                  problem.refsolution.map((item, index) => (
+                    <details key={index} className="group bg-slate-900/40">
+                      <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-800/40 transition flex items-center justify-between">
+                        <span className="text-xs uppercase tracking-wide text-slate-400">
+                          {item.language}
+                        </span>
+                        <span className="text-slate-400 transition-transform group-open:rotate-180">
+                          ▾
+                        </span>
+                      </summary>
+
+                      <div className="px-4 pb-4">
+                        <p className="mt-2 text-sm leading-6 text-slate-300 whitespace-pre-wrap">
+                          {item.solution || "No Solution"}
+                        </p>
+                      </div>
+                    </details>
+                  ))
+                ) : (
+                  <p className="px-4 py-3 text-sm text-slate-400">No Solutions Available</p>
+                )}
+              </div>}
 
             {/* Helpful hint */}
             {tab === "Submissions" && <SubmissionsTab pid={id} />}

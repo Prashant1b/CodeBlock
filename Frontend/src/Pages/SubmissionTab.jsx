@@ -13,7 +13,7 @@ export default function SubmissionsTab({ pid }) {
     try {
       const res = await submissionApi.listByProblem(pid);
 
-      // backend should return: { submissions: [] }
+      
       const list = res.data?.submissions ?? res.data ?? [];
       setSubmissions(Array.isArray(list) ? list : []);
     } catch (e) {
@@ -30,7 +30,7 @@ export default function SubmissionsTab({ pid }) {
 
   useEffect(() => {
     if (pid) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [pid]);
 
   if (loading) return <div className="p-4 text-sm text-slate-400">Loading…</div>;

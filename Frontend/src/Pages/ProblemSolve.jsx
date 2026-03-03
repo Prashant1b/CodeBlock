@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SplitLayout from "../components/Problem/SplitLayout";
 import ProblemLeft from "../components/Problem/ProblemLeft";
-import CodeRight from "../components/Problem/CodeRight"
+import CodeRight from "../components/Problem/CodeRight";
 import ResultPanel from "../components/Problem/ResultPanel";
 import { fetchProblemById } from "../api/problem.api";
 import { runCodeApi, submitCodeApi } from "../api/submit.api";
@@ -28,18 +28,16 @@ export default function ProblemSolve() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // when language changes, set starter code (only if user hasn't typed much)
-useEffect(() => {
-  if (!problem) return;
-  setCode(getInitialCode(problem, language));
-}, [language, problem]);
+  useEffect(() => {
+    if (!problem) return;
+    setCode(getInitialCode(problem, language));
+  }, [language, problem]);
 
   const loadProblem = async () => {
     try {
       setLoadingProblem(true);
       const res = await fetchProblemById(id);
       setProblem(res.data);
-      // set starter code
       setCode(getInitialCode(res.data, language));
     } catch (e) {
       console.log(e);
@@ -55,7 +53,7 @@ useEffect(() => {
       setSubmitResult(null);
 
       const res = await runCodeApi(id, { code, language });
-      setRunResult(res.data); // array
+      setRunResult(res.data);
     } catch (e) {
       setRunResult([{ status: { description: "Error" }, stderr: e?.response?.data || e.message }]);
     } finally {
@@ -88,7 +86,7 @@ useEffect(() => {
 
   return (
     <SplitLayout
-      left={<ProblemLeft problem={problem} />}
+      left={<ProblemLeft problem={problem} currentCode={code} currentLanguage={language} />}
       right={
         <CodeRight
           language={language}

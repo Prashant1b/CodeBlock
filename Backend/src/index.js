@@ -10,6 +10,7 @@
   const cors = require("cors");
   const submitrouter=require('./route/Submit');
   const discussionrouter=require('./route/discussion');
+  const aiRouter=require("./route/aichat")
   const contestrouter=require('./route/contest');
   const ContestSubmission=require('./models/contestSubmission');
   const ContestParticipant=require('./models/contestParticipant');
@@ -28,6 +29,7 @@
   app.use("/problem",submitrouter);
   app.use("/discussion",discussionrouter);
   app.use('/contest',contestrouter);
+  app.use("/ai",aiRouter);
 
   const Initaliseconnection=async()=>{
       try{
@@ -56,7 +58,6 @@
   //         })
   //     })
   // .catch(err=>console.log(err.message))
-
 
 
 
