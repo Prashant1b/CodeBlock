@@ -15,7 +15,7 @@ const options = {
   method: 'POST',
   url: 'https://judge0-ce.p.rapidapi.com/submissions/batch',
   params:{
-     base64_encoded:"false"
+     base64_encoded:"true"
   },
   headers: {
     'x-rapidapi-key': process.env.Judge0,
@@ -50,7 +50,7 @@ const options = {
   url: 'https://judge0-ce.p.rapidapi.com/submissions/batch',
   params: {
     tokens:resulttoken.join(","),
-    base64_encoded: 'false',
+    base64_encoded: 'true',
     fields: '*'
   },
   headers: {
@@ -76,4 +76,3 @@ async function fetchData() {
 }
 
 module.exports={getlanguagebyid,submitBatch,submittoken};
-
