@@ -30,9 +30,15 @@ const submitBatch = async (submissions) => {
   async function fetchData() {
     try {
       const response = await axios.request(options);
-      console.log("Limit:", response.headers['x-ratelimit-limit']);
-      console.log("Remaining:", response.headers['x-ratelimit-remaining']);
-      console.log("Reset:", response.headers['x-ratelimit-reset']);
+      console.error("Judge0 ERROR HEADERS:", response?.headers);
+       const resetSeconds = Number(response?.headers?.['x-ratelimit-batched-submissions-reset']);
+      const serverDate = response?.headers?.date;
+
+      if (resetSeconds && serverDate) {
+        const resetAt = new Date(new Date(serverDate).getTime() + resetSeconds * 1000);
+        console.log("Batch quota reset at:", resetAt.toUTCString());
+        console.log("Batch quota reset at IST:", resetAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
+      }
       return response.data;
     }
     catch (error) {
