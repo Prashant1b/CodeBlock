@@ -1,4 +1,34 @@
 const axios = require('axios');
+
+const encodeBase64Field = (value) => {
+  if (typeof value !== 'string' || value.length === 0) {
+    return value;
+  }
+
+  return Buffer.from(value, 'utf8').toString('base64');
+};
+
+const decodeBase64Field = (value) => {
+  if (typeof value !== 'string' || value.length === 0) {
+    return value;
+  }
+
+  try {
+    return Buffer.from(value, 'base64').toString('utf8');
+  } catch {
+    return value;
+  }
+};
+
+const normalizeSubmissionPayload = (submission) => ({
+  ...submission,
+  source_code: encodeBase64Field(submission.source_code),
+  stdin: encodeBase64Field(submission.stdin),
+  expected_output: encodeBase64Field(submission.expected_output),
+  compiler_options: encodeBase64Field(submission.compiler_options),
+  command_line_arguments: encodeBase64Field(submission.command_line_arguments),
+});
+
 const getlanguagebyid = (lang) => {
   const language = {
     cpp: 54,
@@ -23,7 +53,7 @@ const submitBatch = async (submissions) => {
       'Content-Type': 'application/json'
     },
     data: {
-      submissions
+      submissions: submissions.map(normalizeSubmissionPayload)
     }
   };
 
@@ -62,6 +92,14 @@ const submitBatch = async (submissions) => {
 
 const waiting = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
+const normalizeSubmission = (submission) => ({
+  ...submission,
+  stdout: decodeBase64Field(submission.stdout),
+  stderr: decodeBase64Field(submission.stderr),
+  compile_output: decodeBase64Field(submission.compile_output),
+  message: decodeBase64Field(submission.message),
+});
+
 const submittoken = async (resulttoken) => {
   const options = {
     method: 'GET',
@@ -80,7 +118,12 @@ const submittoken = async (resulttoken) => {
   async function fetchData() {
     try {
       const response = await axios.request(options);
-      return response.data;
+      return {
+        ...response.data,
+        submissions: Array.isArray(response.data?.submissions)
+          ? response.data.submissions.map(normalizeSubmission)
+          : [],
+      };
     } catch (error) {
       console.error(error);
     }
