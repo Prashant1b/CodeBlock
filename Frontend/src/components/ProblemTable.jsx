@@ -117,7 +117,7 @@ export default function ProblemTablePro() {
             className="w-full sm:w-72 rounded-xl border border-white/10 bg-black/20 px-4 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-white/20"
           />
 
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
             {DIFFS.map((d) => {
               const active = diff === d;
               return (
@@ -125,7 +125,7 @@ export default function ProblemTablePro() {
                   key={d}
                   onClick={() => setDiff(d)}
                   className={[
-                    "rounded-xl px-3 py-2 text-xs border transition",
+                    "min-w-0 rounded-xl border px-3 py-2 text-xs font-medium transition",
                     active
                       ? "border-white/20 bg-white/10 text-white"
                       : "border-white/10 bg-black/20 text-slate-400 hover:text-slate-200",
@@ -147,11 +147,11 @@ export default function ProblemTablePro() {
 
       {/* Table */}
       <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-        <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs text-slate-400 border-b border-white/10">
+        <div className="grid grid-cols-12 gap-2 px-3 py-3 text-xs text-slate-400 border-b border-white/10 sm:px-4">
           <div className="col-span-1"> </div>
-          <div className="col-span-6 md:col-span-7">Title</div>
-          <div className="col-span-3 md:col-span-2">Difficulty</div>
-          <div className="col-span-2 text-right">Action</div>
+          <div className="col-span-7 md:col-span-7">Title</div>
+          <div className="col-span-4 text-right md:col-span-2 md:text-left">Difficulty</div>
+          <div className="hidden text-right md:col-span-2 md:block">Action</div>
         </div>
 
         {loading ? (
@@ -166,7 +166,7 @@ export default function ProblemTablePro() {
             return (
               <div
                 key={p._id}
-                className="grid grid-cols-12 gap-2 px-4 py-4 border-b border-white/5 hover:bg-white/5 transition"
+                className="grid grid-cols-12 gap-2 px-3 py-4 border-b border-white/5 hover:bg-white/5 transition sm:px-4"
               >
                 {/* Solved tick */}
                 <div className="col-span-1 flex items-center">
@@ -179,10 +179,10 @@ export default function ProblemTablePro() {
                   />
                 </div>
 
-                <div className="col-span-6 md:col-span-7">
+                <div className="col-span-7 min-w-0 md:col-span-7">
                   <Link
                     to={`/problem/${p._id}`}
-                    className="text-sm md:text-[15px] font-medium text-slate-100 hover:text-blue-400"
+                    className="block truncate text-sm font-medium text-slate-100 hover:text-blue-400 md:text-[15px]"
                   >
                     {p.title}
                   </Link>
@@ -191,11 +191,11 @@ export default function ProblemTablePro() {
                   </div>
                 </div>
 
-                <div className="col-span-3 md:col-span-2 flex items-center">
+                <div className="col-span-4 flex items-center justify-end md:col-span-2 md:justify-start">
                   <DifficultyBadge level={p.difficulty} />
                 </div>
 
-                <div className="col-span-2 flex items-center justify-end">
+                <div className="col-span-11 col-start-2 flex items-center justify-end md:col-span-2 md:col-start-auto">
                   <Link
                     to={`/problem/${p._id}`}
                     className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200 hover:bg-white/10 transition"

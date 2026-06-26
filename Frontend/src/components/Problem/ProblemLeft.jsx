@@ -16,6 +16,16 @@ export default function ProblemLeft({ problem, currentCode = "", currentLanguage
     if (d === "hard") return "bg-red-500/15 text-red-400 border-red-500/25";
     return "bg-white/10 text-slate-200 border-white/10";
   }, [problem?.difficulty]);
+
+  const tags = useMemo(() => {
+    const raw = problem?.tags;
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    return String(raw || "")
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }, [problem?.tags]);
+
   return (
     <div className="h-[72vh] flex flex-col">
       {/* Top Tabs */}
@@ -48,28 +58,36 @@ export default function ProblemLeft({ problem, currentCode = "", currentLanguage
         {tab === "Description" && (
           <div>
             {/* Title + Difficulty */}
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-slate-100">
                   {problem?.title || "Problem"}
                 </h1>
 
-                {/* Tag (your schema has single tag string) */}
-                <div className="mt-2 text-xs text-slate-400">
-                  Tag:{" "}
-                  <span className="text-slate-200">
-                    {problem?.tags || "—"}
-                  </span>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                  <span>Tags:</span>
+                  {tags.length > 0 ? (
+                    tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="max-w-full rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-slate-200"
+                      >
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-slate-200">-</span>
+                  )}
                 </div>
               </div>
 
               <span
                 className={[
-                  "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
+                  "inline-flex min-w-[4.75rem] shrink-0 items-center justify-center self-start rounded-full border px-3 py-1 text-xs font-medium",
                   difficultyPill,
                 ].join(" ")}
               >
-                {problem?.difficulty || "—"}
+                {problem?.difficulty || "-"}
               </span>
             </div>
 
