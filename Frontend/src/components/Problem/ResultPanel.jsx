@@ -128,9 +128,101 @@ function RunResultUI({ data }) {
 }
 
 function SubmitResultUI({ data }) {
+  const isTextResult = typeof data === "string";
+
+  if (isTextResult) {
+    return <div className="text-sm text-slate-200 whitespace-pre-wrap">{data}</div>;
+  }
+
+  const status = String(data?.status || "").toLowerCase();
+  const passed = Number(data?.passed ?? 0);
+  const total = Number(data?.total ?? 0);
+  const runtimeMs = data?.runtimeMs ?? data?.runtime ?? 0;
+  const memoryKb = data?.memoryKb ?? data?.memory ?? 0;
+  const errorMessage = data?.errorMessage || data?.error || "";
+  const submissionId = data?.submissionId || data?._id || "";
+
+  const isAccepted = status === "accepted" || status === "correct" || status === "success";
+  const isWrong = status === "wrong" || status === "wrong answer" || status === "failed";
+  const statusLabel = isAccepted ? "Accepted" : isWrong ? "Wrong Answer" : status || "Submitted";
+  const passedPercent = total > 0 ? Math.round((passed / total) * 100) : 0;
+  const memoryMb = Number(memoryKb) > 0 ? (Number(memoryKb) / 1024).toFixed(2) : "0.00";
+
   return (
-    <div className="text-sm text-slate-200 whitespace-pre-wrap">
-      {typeof data === "string" ? data : JSON.stringify(data, null, 2)}
+    <div className="space-y-4">
+      <div
+        className={`rounded-2xl border p-4 ${
+          isAccepted
+            ? "border-emerald-400/25 bg-emerald-500/10"
+            : "border-rose-400/25 bg-rose-500/10"
+        }`}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div
+              className={`text-lg font-bold ${
+                isAccepted ? "text-emerald-300" : "text-rose-300"
+              }`}
+            >
+              {statusLabel}
+            </div>
+            <div className="mt-1 text-sm text-slate-400">
+              {passed} of {total} hidden testcases passed
+            </div>
+          </div>
+
+          <div
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              isAccepted
+                ? "bg-emerald-400/15 text-emerald-200"
+                : "bg-rose-400/15 text-rose-200"
+            }`}
+          >
+            {passedPercent}%
+          </div>
+        </div>
+
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className={`h-full rounded-full ${
+              isAccepted ? "bg-emerald-400" : "bg-rose-400"
+            }`}
+            style={{ width: `${Math.min(passedPercent, 100)}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatCard label="Runtime" value={`${runtimeMs} ms`} />
+        <StatCard label="Memory" value={`${memoryMb} MB`} />
+        <StatCard label="Testcases" value={`${passed}/${total}`} />
+      </div>
+
+      {errorMessage ? (
+        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-amber-200">
+            Error Message
+          </div>
+          <pre className="mt-2 whitespace-pre-wrap text-sm text-amber-100">
+            {String(errorMessage)}
+          </pre>
+        </div>
+      ) : null}
+
+      {submissionId ? (
+        <div className="truncate text-xs text-slate-500">
+          Submission ID: <span className="font-mono text-slate-400">{submissionId}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-slate-100">{value}</div>
     </div>
   );
 }
