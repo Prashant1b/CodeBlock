@@ -24,6 +24,10 @@
   app.use(express.json());
   app.use(cookieparser());
 
+  app.get("/health", (req, res) => {
+    res.status(200).send("OK");
+  });
+
   app.use("/user",router);
   app.use("/leetcode",problemrouter);
   app.use("/problem",submitrouter);
