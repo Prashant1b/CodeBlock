@@ -368,17 +368,22 @@ const DeleteUserData = async (req, res) => {
 
 const updatepassword = async (req, res) => {
   try {
-    const { password } = req.body;
-    if (!password) {
-      return res.status(400).send('Password is required');
+    const oldPassword = String(req.body?.oldPassword || '');
+    const newPassword = String(req.body?.newPassword || '');
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required' });
     }
-    if (password.length < 6) {
-      return res.status(400).send('Password must be at least 6 characters');
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
     if (!req.user) {
-      return res.status(401).send('Unauthorized');
+      return res.status(401).json({ message: 'Unauthorized' });
     }
-    req.user.password = await bcrypt.hash(password, 10);
+    const oldPasswordMatches = await bcrypt.compare(oldPassword, req.user.password);
+    if (!oldPasswordMatches) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    req.user.password = await bcrypt.hash(newPassword, 10);
     await req.user.save();
     const token = req.cookies.token;
     const payload = jwt.decode(token);
@@ -398,7 +403,7 @@ const updatepassword = async (req, res) => {
       secure: true,
       path: '/',
     });
-    res.status(200).send('Password Update Sucessfully. Login Again');
+    res.status(200).json({ message: 'Password updated successfully. Please login again.' });
   } catch (error) {
     res.status(500).send('Error ' + error.message);
   }

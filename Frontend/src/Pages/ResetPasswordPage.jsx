@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from "react"; 
-import { Link, useNavigate, useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
  import { Eye, EyeOff, Loader2 } from "lucide-react"; 
  import useAuth from "../auth/useAuth";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
-  const { updatePassword } = useAuth();
+  const { updatePassword, logout } = useAuth();
   const [show, setShow] = useState(false);
 
 
@@ -28,14 +28,22 @@ export default function ResetPasswordPage() {
     try {
       setLoading(true);
 
-      await updatePassword({
+      const result = await updatePassword({
         oldPassword,
         newPassword,
       });
 
-      navigate("/signin");
+      await logout({ request: false });
+      // Password update invalidates the server session. Clear the client session
+      // without making a second logout request with the now-invalid cookie.
+      navigate("/signin", { replace: true, state: { message: result?.message } });
     } catch (error) {
-      setErr(error?.message || "Password update failed.");
+      setErr(
+        error?.response?.data?.message ||
+        (typeof error?.response?.data === "string" ? error.response.data : "") ||
+        error?.message ||
+        "Password update failed."
+      );
     } finally {
       setLoading(false);
     }
@@ -57,6 +65,17 @@ export default function ResetPasswordPage() {
           ) : null}
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="text-sm text-white/70">Current password</label>
+              <input
+                type={show ? "text" : "password"}
+                autoComplete="current-password"
+                className="mt-1 h-11 w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 text-sm outline-none focus:border-amber-400/60"
+                placeholder="Current password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+              />
+            </div>
             <div>
               <label className="text-sm text-white/70">New password</label>
               <div className="mt-1 flex h-11 items-center rounded-2xl border border-white/10 bg-slate-950/40 px-3 focus-within:border-amber-400/60">

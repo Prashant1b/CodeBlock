@@ -35,6 +35,8 @@ const refreshProfile = useCallback(async () => {
     return res.data;
   };
 
+  const acceptLogin = (user) => setUser(user ?? null);
+
   const signup = async (firstname, emailid, password) => {
     const res = await authApi.signup({ firstname, emailid, password });
     setUser(res.data?.user ?? null);
@@ -57,9 +59,9 @@ const refreshProfile = useCallback(async () => {
     return res.data;
   };
 
- const logout = async () => {
+ const logout = async ({ request = true } = {}) => {
   try {
-    await authApi.logout();
+    if (request) await authApi.logout();
   } catch {
     // keep local logout even if network fails
   } finally {
@@ -78,6 +80,7 @@ const refreshProfile = useCallback(async () => {
       user,
       booting,
       login,
+      acceptLogin,
       signup,
       sendSignupOtp,
       signupWithOtp,
